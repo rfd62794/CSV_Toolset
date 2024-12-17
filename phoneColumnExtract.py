@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from tkinter import Tk, filedialog, simpledialog
+import csv
 
 def select_file_or_folder():
     root = Tk()
@@ -28,7 +29,7 @@ def process_csv_files(source_path, destination_folder):
 
     for file in files:
         try:
-            df = pd.read_csv(file, low_memory=False)
+            df = pd.read_csv(file, low_memory=False, sep=',', quoting=csv.QUOTE_MINIMAL, error_bad_lines=False, warn_bad_lines=True)
             if 'Phone' in df.columns:
                 # Attempt to convert 'Phone' column to numeric, coercing errors to NaN
                 df['Phone'] = pd.to_numeric(df['Phone'], errors='coerce')
