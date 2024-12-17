@@ -24,14 +24,15 @@ def process_csv_files(source_path, destination_folder):
     if os.path.isfile(source_path):
         files = [source_path]
     else:
-        files = [os.path.join(source_path, f) for f in os.listdir(source_path) if f.endswith('.csv')]
+        files = [os.path.join(source_path, f) for f in os.listdir(source_path) if f.endswith('.csv') and not f.endswith('_Phone.csv')]
 
     for file in files:
         try:
-            df = pd.read_csv(file)
+            df = pd.read_csv(file, low_memory=False)
             if 'Phone' in df.columns:
-                # Convert the 'Phone' column to string to handle different data formats
-                phone_data = df[['Phone']].astype(str)
+                # Attempt to convert 'Phone' column to numeric, coercing errors to NaN
+                df['Phone'] = pd.to_numeric(df['Phone'], errors='coerce')
+                phone_data = df[['Phone']].dropna().astype('Int64')  # Use 'Int64' to handle NaNs
                 new_filename = os.path.splitext(os.path.basename(file))[0] + "_Phone.csv"
                 new_filepath = os.path.join(destination_folder, new_filename)
                 phone_data.to_csv(new_filepath, index=False)
