@@ -1,27 +1,26 @@
 import os
 import pandas as pd
-from tkinter import Tk, filedialog, simpledialog
+from tkinter import Tk, filedialog, Button, Label
 import csv
 
-def select_file_or_folder():
-    root = Tk()
-    root.withdraw()  # Hide the root window
-    choice = simpledialog.askstring("Input", "Type 'File' to select a file or 'Folder' to select a folder:")
-    
-    if choice and choice.lower() == 'file':
-        return filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
-    elif choice and choice.lower() == 'folder':
-        return filedialog.askdirectory(title="Select a Folder")
-    else:
-        print("Invalid choice or no selection made.")
-        return None
+def select_file():
+    file_path = filedialog.askopenfilename(title="Select a File", filetypes=[("CSV files", "*.csv")])
+    if file_path:
+        process_csv_files(file_path, select_destination_folder())
+
+def select_folder():
+    folder_path = filedialog.askdirectory(title="Select a Folder")
+    if folder_path:
+        process_csv_files(folder_path, select_destination_folder())
 
 def select_destination_folder():
-    root = Tk()
-    root.withdraw()  # Hide the root window
     return filedialog.askdirectory(title="Select Destination Folder")
 
 def process_csv_files(source_path, destination_folder):
+    if not destination_folder:
+        print("No destination folder selected.")
+        return
+
     if os.path.isfile(source_path):
         files = [source_path]
     else:
@@ -31,9 +30,8 @@ def process_csv_files(source_path, destination_folder):
         try:
             df = pd.read_csv(file, low_memory=False, sep=',', quoting=csv.QUOTE_MINIMAL, on_bad_lines='warn')
             if 'Phone' in df.columns:
-                # Attempt to convert 'Phone' column to numeric, coercing errors to NaN
                 df['Phone'] = pd.to_numeric(df['Phone'], errors='coerce')
-                phone_data = df[['Phone']].dropna().astype('Int64')  # Use 'Int64' to handle NaNs
+                phone_data = df[['Phone']].dropna().astype('Int64')
                 new_filename = os.path.splitext(os.path.basename(file))[0] + "_Phone.csv"
                 new_filepath = os.path.join(destination_folder, new_filename)
                 phone_data.to_csv(new_filepath, index=False)
@@ -43,13 +41,20 @@ def process_csv_files(source_path, destination_folder):
         except Exception as e:
             print(f"Error processing {file}: {e}")
 
+def create_gui():
+    root = Tk()
+    root.title("CSV Phone Column Extractor")
+
+    label = Label(root, text="Select a File or Folder to Process")
+    label.pack(pady=10)
+
+    file_button = Button(root, text="Select File", command=select_file)
+    file_button.pack(pady=5)
+
+    folder_button = Button(root, text="Select Folder", command=select_folder)
+    folder_button.pack(pady=5)
+
+    root.mainloop()
+
 if __name__ == "__main__":
-    source_path = select_file_or_folder()
-    if source_path:
-        destination_folder = select_destination_folder()
-        if destination_folder:
-            process_csv_files(source_path, destination_folder)
-        else:
-            print("No destination folder selected.")
-    else:
-        print("No file or folder selected.")
+    create_gui()
