@@ -6,57 +6,87 @@ import os
 def select_csv_file():
     global filename
     filename = filedialog.askopenfilename(initialdir="/",
-                                          title="Select a File",
-                                          filetypes=(("CSV files", "*.csv*"), ("all files","*.*")))
+                                          title="Select a CSV File",
+                                          filetypes=(("CSV files", "*.csv"), ("all files", "*.*")))
     if filename:
         file_label.config(text=filename)
+
+def select_csv_folder():
+    global filename
+    filename = filedialog.askdirectory(initialdir="/", title="Select a Folder")
+    if filename:
+        file_label.config(text=filename)
+
+def select_destination_folder():
+    global destination_folder
+    destination_folder = filedialog.askdirectory(initialdir="/", title="Select Destination Folder")
+    if destination_folder:
+        destination_label.config(text=destination_folder)
 
 def add_column():
     column_name = column_entry.get()
     filler_value = filler_entry.get()
 
     if not column_name or not filename:
-        error_label.config(text="Please select a file and enter a column name.")
+        error_label.config(text="Please select a file/folder and enter a column name.")
         return
 
-    encodings_to_try = ['utf-8', 'ascii', 'latin-1', 'iso-8859-1', 'cp1252']  # List of encodings to try
+    encodings_to_try = ['utf-8', 'ascii', 'latin-1', 'iso-8859-1', 'cp1252']
 
-    for encoding in encodings_to_try:
-        try:
-            with open(filename, 'r', encoding=encoding) as csvfile:
-                reader = csv.reader(csvfile)
-                data = list(reader)
-                header = data[0]
-                header.append(column_name)
-                for row in data[1:]:
-                    row.append(filler_value)
+    files_to_process = []
+    if os.path.isdir(filename):
+        for root, _, files in os.walk(filename):
+            for file in files:
+                if file.endswith('.csv'):
+                    files_to_process.append(os.path.join(root, file))
+    else:
+        files_to_process.append(filename)
 
-            # Generate the new filename
-            base_filename = os.path.splitext(filename)[0]
-            new_filename = f"{base_filename}_{column_name}.csv"
+    for file in files_to_process:
+        for encoding in encodings_to_try:
+            try:
+                with open(file, 'r', encoding=encoding) as csvfile:
+                    reader = csv.reader(csvfile)
+                    data = list(reader)
+                    header = data[0]
+                    header.append(column_name)
+                    for row in data[1:]:
+                        row.append(filler_value)
 
-            with open(new_filename, 'w', newline='', encoding=encoding) as csvfile:  # Use the same encoding for writing
-                writer = csv.writer(csvfile)
-                writer.writerow(header)
-                writer.writerows(data[1:])
+                base_filename = os.path.splitext(os.path.basename(file))[0]
+                new_filename = f"{base_filename}_{column_name.replace(' ', '_')}.csv"
+                new_filepath = os.path.join(destination_folder, new_filename)
 
-            error_label.config(text="Column added successfully!")
-            return  # Exit the loop if successful
+                with open(new_filepath, 'w', newline='', encoding=encoding) as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(header)
+                    writer.writerows(data[1:])
 
-        except UnicodeDecodeError:
-            continue  # Try the next encoding if UnicodeDecodeError occurs
+                error_label.config(text="Column added successfully!")
+                break
 
-    # If none of the encodings worked
-    error_label.config(text="Could not determine file encoding.")
+            except UnicodeDecodeError:
+                continue
+
+    error_label.config(text="Could not determine file encoding for some files.")
 
 root = tk.Tk()
 root.title("CSV Column Appender")
 
-select_button = tk.Button(root, text="Select CSV File", command=select_csv_file)
-select_button.pack(pady=10)
+select_file_button = tk.Button(root, text="Select CSV File", command=select_csv_file)
+select_file_button.pack(pady=10)
 
-file_label = tk.Label(root, text="No file selected")
+select_folder_button = tk.Button(root, text="Select CSV Folder", command=select_csv_folder)
+select_folder_button.pack(pady=10)
+
+file_label = tk.Label(root, text="No file or folder selected")
 file_label.pack()
+
+destination_button = tk.Button(root, text="Select Destination Folder", command=select_destination_folder)
+destination_button.pack(pady=10)
+
+destination_label = tk.Label(root, text="No destination folder selected")
+destination_label.pack()
 
 column_label = tk.Label(root, text="Enter Column Name:")
 column_label.pack()
