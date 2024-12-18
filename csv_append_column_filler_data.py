@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 import csv
 import os
+import chardet
 
 def select_csv_file():
     global filename
@@ -23,6 +24,12 @@ def select_destination_folder():
     if destination_folder:
         destination_label.config(text=destination_folder)
 
+def detect_encoding(file_path):
+    with open(file_path, 'rb') as f:
+        raw_data = f.read()
+    result = chardet.detect(raw_data)
+    return result['encoding']
+
 def add_column():
     column_name = column_entry.get()
     filler_value = filler_entry.get()
@@ -43,32 +50,32 @@ def add_column():
         files_to_process.append(filename)
 
     for file in files_to_process:
-        for encoding in encodings_to_try:
-            try:
-                with open(file, 'r', encoding=encoding) as csvfile:
-                    reader = csv.reader(csvfile)
-                    data = list(reader)
-                    header = data[0]
-                    header.append(column_name)
-                    for row in data[1:]:
-                        row.append(filler_value)
+        detected_encoding = detect_encoding(file)
+        try:
+            with open(file, 'r', encoding=detected_encoding) as csvfile:
+                reader = csv.reader(csvfile)
+                data = list(reader)
+                header = data[0]
+                header.append(column_name)
+                for row in data[1:]:
+                    row.append(filler_value)
 
-                base_filename = os.path.splitext(os.path.basename(file))[0]
-                new_filename = f"{base_filename}_{column_name.replace(' ', '_')}.csv"
-                new_filepath = os.path.join(destination_folder, new_filename)
+            base_filename = os.path.splitext(os.path.basename(file))[0]
+            new_filename = f"{base_filename}_{column_name.replace(' ', '_')}.csv"
+            new_filepath = os.path.join(destination_folder, new_filename)
 
-                with open(new_filepath, 'w', newline='', encoding=encoding) as csvfile:
-                    writer = csv.writer(csvfile)
-                    writer.writerow(header)
-                    writer.writerows(data[1:])
+            with open(new_filepath, 'w', newline='', encoding=detected_encoding) as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(header)
+                writer.writerows(data[1:])
 
-                error_label.config(text="Column added successfully!")
-                break
+            error_label.config(text="Column added successfully!")
 
-            except UnicodeDecodeError:
-                continue
+        except (UnicodeDecodeError, FileNotFoundError) as e:
+            error_label.config(text=f"Error processing file {file}: {str(e)}")
+            continue
 
-    error_label.config(text="Could not determine file encoding for some files.")
+    error_label.config(text="Processing complete.")
 
 root = tk.Tk()
 root.title("CSV Column Appender")
