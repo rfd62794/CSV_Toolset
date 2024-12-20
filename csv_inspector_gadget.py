@@ -431,7 +431,8 @@ def csv_stats(filename, pause_after_print=True):
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
-    except UnicodeDecodeError:
+    except UnicodeDecodeError as e:
+        logging.error(f"UnicodeDecodeError: {e}. File: {filename}, Encoding: {encoding}")
         print("Error: Unable to decode the file with the detected encoding.")
     except csv.Error as e:
         print(f"CSV parsing error: {e}")
@@ -463,7 +464,7 @@ def analyze_data_with_pandas(filename, encoding):
     total_rows = sum(1 for _ in open(filename)) - 1  # Subtract 1 for header
 
     with tqdm(total=total_rows, desc="Processing CSV") as pbar:
-        for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size):
+        for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size, error_bad_lines=False):
             if column_names is None:
                 column_names = chunk.columns.tolist()
             num_rows += len(chunk)
