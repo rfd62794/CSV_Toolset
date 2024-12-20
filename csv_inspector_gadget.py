@@ -68,7 +68,7 @@ def estimate_total_rows(filename, encoding):
       int: Estimated total number of rows.
     """
     with open(filename, 'r', encoding=encoding) as f:
-        return sum(1 for _ in f) - 1  # Subtract 1 for the header row
+        return sum(1 for _ in f) - 1 if f.readline() else 0  # Handle empty file case
 
 def estimate_chunk_size(filename, encoding):
     """
