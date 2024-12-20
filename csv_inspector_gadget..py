@@ -24,6 +24,12 @@ def get_file_info(filename):
         encoding = result['encoding']
     return file_size, encoding
 
+def detect_delimiter(filename, encoding):
+    with open(filename, 'r', encoding=encoding) as f:
+        sample = f.read(1024)
+        sniffer = csv.Sniffer()
+        return sniffer.sniff(sample).delimiter
+
 def analyze_data(filename, encoding):
     """
     Analyzes the data in the CSV file, including data types, unique values,
@@ -37,8 +43,9 @@ def analyze_data(filename, encoding):
       tuple: A tuple containing dictionaries for data types, unique values, 
              null counts, value counts, numeric stats, and number of rows.
     """
+    delimiter = detect_delimiter(filename, encoding)
     with open(filename, 'r', encoding=encoding) as f:
-        reader = csv.reader(f)
+        reader = csv.reader(f, delimiter=delimiter)
         try:
             column_names = next(reader)
         except StopIteration:
