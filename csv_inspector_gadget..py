@@ -32,18 +32,6 @@ def detect_delimiter(filename, encoding):
         return sniffer.sniff(sample).delimiter
 
 def analyze_data(filename, encoding):
-    """
-    Analyzes the data in the CSV file, including data types, unique values,
-    null counts, value counts, and numeric statistics.
-
-    Args:
-      filename (str): The path to the CSV file.
-      encoding (str): The encoding of the CSV file.
-
-    Returns:
-      tuple: A tuple containing dictionaries for data types, unique values, 
-             null counts, value counts, numeric stats, and number of rows.
-    """
     delimiter = detect_delimiter(filename, encoding)
     with open(filename, 'r', encoding=encoding) as f:
         reader = csv.reader(f, delimiter=delimiter)
@@ -62,18 +50,22 @@ def analyze_data(filename, encoding):
 
         for row in reader:
             num_rows += 1
-            for i, value in enumerate(row):
-                data_types[column_names[i]].add(detect_data_type(value))
-
-                unique_values[column_names[i]].add(value)
-                if value == '' or value is None:
-                    null_counts[column_names[i]] += 1
-                value_counts[column_names[i]][value] += 1
-
-                update_numeric_stats(numeric_stats, column_names[i], value)
+            process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats)
 
     return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows
 
+def process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats):
+    for i, value in enumerate(row):
+        process_value(value, column_names[i], data_types, unique_values, null_counts, value_counts, numeric_stats)
+
+def process_value(value, column_name, data_types, unique_values, null_counts, value_counts, numeric_stats):
+    detected_type = detect_data_type(value)
+    data_types[column_name].add(detected_type)
+    unique_values[column_name].add(value)
+    if value == '' or value is None:
+        null_counts[column_name] += 1
+    value_counts[column_name][value] += 1
+    update_numeric_stats(numeric_stats, column_name, value)
 
 def detect_data_type(value):
     """
@@ -114,7 +106,6 @@ def detect_data_type(value):
             else:
                 return str
 
-
 def update_numeric_stats(numeric_stats, column_name, value):
     """
     Updates the numeric statistics for a column.
@@ -139,7 +130,6 @@ def update_numeric_stats(numeric_stats, column_name, value):
     numeric_stats[column_name].setdefault('max', num_value)
     numeric_stats[column_name]['max'] = max(numeric_stats[column_name]['max'], num_value)
     numeric_stats[column_name].setdefault('values', []).append(num_value)
-
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
@@ -203,7 +193,6 @@ def print_stats(file_size, encoding, column_names, num_rows,
 
     # (You can add more data profiling features here)
 
-
 def csv_stats(filename):
     """
     Main function to orchestrate the CSV analysis.
@@ -229,7 +218,6 @@ def csv_stats(filename):
         print(f"Error: File '{filename}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def browse_file():
     """Opens a file dialog to select a CSV file."""
