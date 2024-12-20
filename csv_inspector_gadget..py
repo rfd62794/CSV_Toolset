@@ -101,6 +101,8 @@ def detect_data_type(value):
                 return 'postcode'
             elif value.lower() in ['true', 'false']:  # Boolean
                 return 'boolean'
+            elif re.match(r'\d{2}:\d{2}(:\d{2})?', value):  # Time (HH:MM or HH:MM:SS)
+                return 'time'
             else:
                 return str
 
