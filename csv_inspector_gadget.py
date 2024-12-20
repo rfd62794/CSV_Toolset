@@ -208,27 +208,30 @@ def convert_to_numeric(value):
             return None
 
 def update_stats(stats, num_value):
-    stats.setdefault('count', 0)
-    stats['count'] += 1
-    stats.setdefault('min', num_value)
-    stats['min'] = min(stats['min'], num_value)
-    stats.setdefault('max', num_value)
-    stats['max'] = max(stats['max'], num_value)
-    
-    # Online calculation of mean and variance
-    stats.setdefault('mean', 0)
-    stats.setdefault('M2', 0)  # Sum of squares of differences from the current mean
-    delta = num_value - stats['mean']
-    stats['mean'] += delta / stats['count']
-    delta2 = num_value - stats['mean']
-    stats['M2'] += delta * delta2
-    
-    if stats['count'] > 1:
-        stats['variance'] = stats['M2'] / (stats['count'] - 1)
-        stats['std_dev'] = stats['variance'] ** 0.5
-    else:
-        stats['variance'] = 0
-        stats['std_dev'] = 0
+    try:
+        stats.setdefault('count', 0)
+        stats['count'] += 1
+        stats.setdefault('min', num_value)
+        stats['min'] = min(stats['min'], num_value)
+        stats.setdefault('max', num_value)
+        stats['max'] = max(stats['max'], num_value)
+        
+        # Online calculation of mean and variance
+        stats.setdefault('mean', 0)
+        stats.setdefault('M2', 0)  # Sum of squares of differences from the current mean
+        delta = num_value - stats['mean']
+        stats['mean'] += delta / stats['count']
+        delta2 = num_value - stats['mean']
+        stats['M2'] += delta * delta2
+        
+        if stats['count'] > 1:
+            stats['variance'] = stats['M2'] / (stats['count'] - 1)
+            stats['std_dev'] = stats['variance'] ** 0.5
+        else:
+            stats['variance'] = 0
+            stats['std_dev'] = 0
+    except Exception as e:
+        logging.error(f"Error updating stats for value {num_value}: {e}")
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
