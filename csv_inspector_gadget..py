@@ -200,6 +200,7 @@ def csv_stats(filename):
 
         start_time = time.time()
         data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows = analyze_data(filename, encoding)
+        column_names = list(data_types.keys())
         elapsed_time = time.time() - start_time
         print(f"\nData analysis completed in {elapsed_time:.2f} seconds")
 
