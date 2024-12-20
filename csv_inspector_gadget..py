@@ -188,12 +188,13 @@ def print_data_completeness(column_names, null_counts, num_rows):
         non_null_percent = (1 - (null_counts[col] / num_rows)) * 100 if num_rows > 0 else 0
         print(f"  {col}: {non_null_percent:.2f}%")
 
-def csv_stats(filename):
+def csv_stats(filename, pause_after_print=True):
     """
     Main function to orchestrate the CSV analysis.
 
     Args:
       filename (str): The path to the CSV file.
+      pause_after_print (bool): Whether to pause after printing stats.
     """
     try:
         file_size, encoding = get_file_info(filename)
@@ -210,7 +211,8 @@ def csv_stats(filename):
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
-        input("Press Enter to continue...")
+        if pause_after_print:
+            input("Press Enter to continue...")
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
@@ -230,6 +232,13 @@ def browse_file():
         csv_stats(file_path)
     else:
         print("No file selected.")
+
+def analyze_data_with_pandas(filename, encoding):
+    df = pd.read_csv(filename, encoding=encoding)
+    column_names = df.columns.tolist()
+    num_rows = len(df)
+    # Further analysis can be done using pandas methods
+    return column_names, num_rows
 
 if __name__ == "__main__":
     browse_file()
