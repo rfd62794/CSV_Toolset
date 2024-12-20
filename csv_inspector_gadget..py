@@ -330,6 +330,32 @@ def print_stats_to_text(file_size, encoding, column_names, num_rows,
                 stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
             f.write(f"  {col}: {stats}\n")
 
+def print_static_info(filename, file_size, encoding, column_names, num_rows):
+    # File metadata
+    file_stats = os.stat(filename)
+    last_modified = time.ctime(file_stats.st_mtime)
+    creation_time = time.ctime(file_stats.st_ctime)
+
+    print("\n--- Static Information ---")
+    print(f"File size: {file_size} bytes")
+    print(f"Detected encoding: {encoding}")
+    print(f"Last modified: {last_modified}")
+    print(f"Creation time: {creation_time}")
+    print(f"Number of columns: {len(column_names)}")
+    print(f"Number of rows: {num_rows}")
+
+def print_data_completeness_summary(null_counts, num_rows):
+    print("\n--- Data Completeness Summary ---")
+    for col, null_count in null_counts.items():
+        completeness = (1 - null_count / num_rows) * 100
+        print(f"{col}: {completeness:.2f}% complete")
+
+def print_top_frequent_values(value_counts, top_n=5):
+    print("\n--- Top Frequent Values ---")
+    for col, counts in value_counts.items():
+        top_values = counts.most_common(top_n)
+        print(f"{col}: {top_values}")
+
 def csv_stats(filename, pause_after_print=True):
     """
     Main function to orchestrate the CSV analysis.
@@ -349,10 +375,16 @@ def csv_stats(filename, pause_after_print=True):
         elapsed_time = time.time() - start_time
         print(f"\nData analysis completed in {elapsed_time:.2f} seconds")
 
-        print_stats(file_size, encoding, column_names, num_rows,
-                    data_types, unique_values, null_counts, value_counts, numeric_stats)
+        # Print static information
+        print_static_info(filename, file_size, encoding, column_names, num_rows)
 
-        save_results(file_size, encoding, column_names, num_rows, 
+        # Print data completeness summary
+        print_data_completeness_summary(null_counts, num_rows)
+
+        # Print top frequent values
+        print_top_frequent_values(value_counts)
+
+        save_results(file_size, encoding, column_names, num_rows,
                      data_types, unique_values, null_counts, value_counts, numeric_stats)
 
         if pause_after_print:
