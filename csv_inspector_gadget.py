@@ -432,10 +432,13 @@ def browse_file():
         print("No file selected.")
 
 def analyze_data_with_pandas(filename, encoding):
-    df = pd.read_csv(filename, encoding=encoding)
-    column_names = df.columns.tolist()
-    num_rows = len(df)
-    # Further analysis can be done using pandas methods
+    chunk_size = 10000  # Example chunk size
+    column_names = None
+    num_rows = 0
+    for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size):
+        if column_names is None:
+            column_names = chunk.columns.tolist()
+        num_rows += len(chunk)
     return column_names, num_rows
 
 if __name__ == "__main__":
