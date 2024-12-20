@@ -127,8 +127,11 @@ def analyze_data(filename, encoding):
     return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names
 
 def process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats):
-    for i, value in enumerate(row):
-        process_value(value, column_names[i], data_types, unique_values, null_counts, value_counts, numeric_stats)
+    try:
+        for i, value in enumerate(row):
+            process_value(value, column_names[i], data_types, unique_values, null_counts, value_counts, numeric_stats)
+    except Exception as e:
+        logging.error(f"Error processing row {row}: {e}")
 
 def process_value(value, column_name, data_types, unique_values, null_counts, value_counts, numeric_stats):
     detected_type = detect_data_type(value)
