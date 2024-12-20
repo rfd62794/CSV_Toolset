@@ -31,7 +31,11 @@ def detect_delimiter(filename, encoding):
     with open(filename, 'r', encoding=encoding) as f:
         sample = f.read(1024)
         sniffer = csv.Sniffer()
-        return sniffer.sniff(sample).delimiter
+        try:
+            return sniffer.sniff(sample).delimiter
+        except csv.Error:
+            print("Warning: Could not detect delimiter. Using default ','")
+            return ','
 
 def estimate_row_size(filename, encoding, sample_size=100):
     """
