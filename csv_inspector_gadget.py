@@ -10,6 +10,7 @@ import statistics
 import pandas as pd
 import psutil
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 
@@ -451,6 +452,27 @@ def analyze_data_with_pandas(filename, encoding):
             column_names = chunk.columns.tolist()
         num_rows += len(chunk)
     return column_names, num_rows
+
+def print_stats_to_json(file_size, encoding, column_names, num_rows, 
+                        data_types, unique_values, null_counts, value_counts, numeric_stats, output_file):
+    data = {
+        "file_stats": {
+            "file_size": file_size,
+            "encoding": encoding
+        },
+        "data_stats": {
+            "column_names": column_names,
+            "num_rows": num_rows
+        },
+        "data_types": {col: [t.__name__ if isinstance(t, type) else t for t in types] for col, types in data_types.items()},
+        "unique_values": {col: len(values) for col, values in unique_values.items()},
+        "null_counts": null_counts,
+        "value_counts": {col: counts.most_common(5) for col, counts in value_counts.items()},
+        "numeric_stats": numeric_stats
+    }
+
+    with open(output_file, 'w') as f:
+        json.dump(data, f, indent=4)
 
 if __name__ == "__main__":
     browse_file()
