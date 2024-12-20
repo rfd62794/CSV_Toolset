@@ -117,6 +117,8 @@ def analyze_data(filename, encoding):
         for row in reader:
             num_rows += 1
             process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats)
+            if num_rows % chunk_size == 0:
+                print(f"Processed {num_rows} rows...")
 
     return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows
 
