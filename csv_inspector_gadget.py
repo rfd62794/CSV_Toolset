@@ -301,28 +301,36 @@ def prompt_user_for_output():
             print("Invalid choice. Please enter 1, 2, 3, or 4.")
 
 def get_output_file_path(file_type):
-    while True:
-        file_path = input(f"Enter the destination path for {file_type} output (e.g., /path/to/results.{file_type}): ")
-        directory = os.path.dirname(file_path)
-        if os.path.isdir(directory) and os.access(directory, os.W_OK):
-            return file_path
-        else:
-            print("Invalid directory or no write permission. Please enter a valid path.")
+    """Opens a file dialog to select the destination path for output."""
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=f".{file_type}",
+        filetypes=[(f"{file_type.upper()} files", f"*.{file_type}"), ("All files", "*.*")]
+    )
+    if file_path:
+        return file_path
+    else:
+        print(f"No {file_type} file path selected.")
+        return None
 
 def save_results(file_size, encoding, column_names, num_rows, 
                  data_types, unique_values, null_counts, value_counts, numeric_stats):
     choice = prompt_user_for_output()
     if choice == '1' or choice == '3':
         output_file_json = get_output_file_path('json')
-        print_stats_to_json(file_size, encoding, column_names, num_rows, 
-                            data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_json)
-        print(f"Results saved to {output_file_json}")
+        if output_file_json:
+            print_stats_to_json(file_size, encoding, column_names, num_rows, 
+                                data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_json)
+            print(f"Results saved to {output_file_json}")
 
     if choice == '2' or choice == '3':
         output_file_txt = get_output_file_path('txt')
-        print_stats_to_text(file_size, encoding, column_names, num_rows, 
-                            data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_txt)
-        print(f"Results saved to {output_file_txt}")
+        if output_file_txt:
+            print_stats_to_text(file_size, encoding, column_names, num_rows, 
+                                data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_txt)
+            print(f"Results saved to {output_file_txt}")
 
 def print_stats_to_text(file_size, encoding, column_names, num_rows, 
                         data_types, unique_values, null_counts, value_counts, numeric_stats, output_file):
