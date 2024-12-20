@@ -188,7 +188,7 @@ def print_data_completeness(column_names, null_counts, num_rows):
         non_null_percent = (1 - (null_counts[col] / num_rows)) * 100 if num_rows > 0 else 0
         print(f"  {col}: {non_null_percent:.2f}%")
 
-def csv_stats(filename):
+def csv_stats(filename, pause_after_print=True):
     """
     Main function to orchestrate the CSV analysis.
 
@@ -200,6 +200,9 @@ def csv_stats(filename):
 
         start_time = time.time()
         data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows = analyze_data(filename, encoding)
+        if num_rows == 0:
+            print("The CSV file is empty.")
+            return
         column_names = list(data_types.keys())
         elapsed_time = time.time() - start_time
         print(f"\nData analysis completed in {elapsed_time:.2f} seconds")
@@ -207,8 +210,8 @@ def csv_stats(filename):
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
-        # Prompt user after printing stats
-        input("Press Enter to continue...")
+        if pause_after_print:
+            input("Press Enter to continue...")
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
