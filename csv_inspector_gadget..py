@@ -93,7 +93,7 @@ def detect_data_type(value):
                 return 'email'
             elif re.match(r'https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)', value):  # URL
                 return 'url'
-            elif re.match(r'(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', value):  # Phone number (US)
+            elif re.match(r'(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', value):  # Phone number (US)
                 return 'phone'
             elif re.match(r'^(?:\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', value):  # Phone number (International)
                 return 'phone'
