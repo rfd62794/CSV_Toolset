@@ -185,6 +185,9 @@ def update_stats(stats, num_value):
     stats.setdefault('max', num_value)
     stats['max'] = max(stats['max'], num_value)
     stats.setdefault('values', []).append(num_value)
+    if 'values' in stats:
+        stats['median'] = statistics.median(stats['values'])
+        stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
