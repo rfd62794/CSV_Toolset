@@ -9,6 +9,9 @@ from tkinter import filedialog
 import statistics
 import pandas as pd
 import psutil
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 def get_file_info(filename):
     """
@@ -105,7 +108,7 @@ def analyze_data(filename, encoding):
             column_names = next(reader)
         except StopIteration:
             print("Error: The CSV file is empty.")
-            return {}, {}, {}, {}, {}, 0
+            return {}, {}, {}, {}, {}, 0, []
 
         num_rows = 0
         data_types = defaultdict(set)
@@ -120,7 +123,7 @@ def analyze_data(filename, encoding):
             if num_rows % chunk_size == 0:
                 print(f"Processed {num_rows} rows...")
 
-    return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows
+    return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names
 
 def process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats):
     for i, value in enumerate(row):
@@ -379,24 +382,20 @@ def csv_stats(filename, pause_after_print=True):
       filename (str): The path to the CSV file.
       pause_after_print (bool): Whether to pause after printing stats.
     """
+    logging.info("Starting CSV analysis...")
     try:
         file_size, encoding = get_file_info(filename)
         start_time = time.time()
-        data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows = analyze_data(filename, encoding)
+        data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names = analyze_data(filename, encoding)
         if num_rows == 0:
             print("The CSV file is empty.")
             return
-        column_names = list(data_types.keys())
         elapsed_time = time.time() - start_time
         print(f"\nData analysis completed in {elapsed_time:.2f} seconds")
 
         # Print static information
         print_static_info(filename, file_size, encoding, column_names, num_rows)
-
-        # Print data completeness summary
         print_data_completeness_summary(null_counts, num_rows)
-
-        # Print top frequent values
         print_top_frequent_values(value_counts)
 
         save_results(file_size, encoding, column_names, num_rows,
@@ -416,6 +415,7 @@ def csv_stats(filename, pause_after_print=True):
     finally:
         if pause_after_print:
             input("Press Enter to continue...")
+    logging.info("CSV analysis completed.")
 
 def browse_file():
     """Opens a file dialog to select a CSV file."""
