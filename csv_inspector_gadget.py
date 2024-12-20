@@ -47,7 +47,11 @@ def estimate_row_size(filename, encoding, sample_size=100):
     """
     with open(filename, 'r', encoding=encoding) as f:
         reader = csv.reader(f)
-        sample_rows = [next(reader) for _ in range(sample_size)]
+        try:
+            sample_rows = [next(reader) for _ in range(sample_size)]
+        except StopIteration:
+            print("Warning: File has fewer rows than the sample size.")
+            sample_rows = list(reader)
         total_size = sum(len(','.join(row).encode(encoding)) for row in sample_rows)
         average_row_size = total_size / sample_size
     return average_row_size
