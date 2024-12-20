@@ -188,6 +188,66 @@ def print_data_completeness(column_names, null_counts, num_rows):
         non_null_percent = (1 - (null_counts[col] / num_rows)) * 100 if num_rows > 0 else 0
         print(f"  {col}: {non_null_percent:.2f}%")
 
+def prompt_user_for_output():
+    print("\nWould you like to save the analysis results?")
+    print("1. JSON format")
+    print("2. Text format")
+    print("3. Both")
+    print("4. None")
+    choice = input("Enter your choice (1/2/3/4): ")
+    return choice
+
+def save_results(file_size, encoding, column_names, num_rows, 
+                 data_types, unique_values, null_counts, value_counts, numeric_stats):
+    choice = prompt_user_for_output()
+    if choice == '1' or choice == '3':
+        output_file_json = input("Enter the filename for JSON output (e.g., results.json): ")
+        print_stats_to_json(file_size, encoding, column_names, num_rows, 
+                            data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_json)
+        print(f"Results saved to {output_file_json}")
+
+    if choice == '2' or choice == '3':
+        output_file_txt = input("Enter the filename for text output (e.g., results.txt): ")
+        print_stats_to_text(file_size, encoding, column_names, num_rows, 
+                            data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_txt)
+        print(f"Results saved to {output_file_txt}")
+
+def print_stats_to_text(file_size, encoding, column_names, num_rows, 
+                        data_types, unique_values, null_counts, value_counts, numeric_stats, output_file):
+    with open(output_file, 'w') as f:
+        f.write("--- File Stats ---\n")
+        f.write(f"File size: {file_size} bytes\n")
+        f.write(f"Detected encoding: {encoding}\n\n")
+        
+        f.write("--- Data Stats ---\n")
+        f.write(f"Column names: {column_names}\n")
+        f.write(f"Number of rows: {num_rows}\n\n")
+        
+        f.write("Data types (with pattern matching):\n")
+        for col, types in data_types.items():
+            type_names = [t.__name__ if isinstance(t, type) else t for t in types]
+            f.write(f"  {col}: {', '.join(type_names)}\n")
+        
+        f.write("\nUnique values:\n")
+        for col, values in unique_values.items():
+            f.write(f"  {col}: {len(values)}\n")
+        
+        f.write("\nNull value counts:\n")
+        for col, count in null_counts.items():
+            f.write(f"  {col}: {count}\n")
+        
+        f.write("\nMost frequent values:\n")
+        for col, counts in value_counts.items():
+            top_5_values = counts.most_common(5)
+            f.write(f"  {col}: {top_5_values}\n")
+        
+        f.write("\nNumeric column statistics:\n")
+        for col, stats in numeric_stats.items():
+            if 'values' in stats:
+                stats['median'] = statistics.median(stats['values'])
+                stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
+            f.write(f"  {col}: {stats}\n")
+
 def csv_stats(filename, pause_after_print=True):
     """
     Main function to orchestrate the CSV analysis.
@@ -211,13 +271,20 @@ def csv_stats(filename, pause_after_print=True):
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
+        save_results(file_size, encoding, column_names, num_rows, 
+                     data_types, unique_values, null_counts, value_counts, numeric_stats)
+
         if pause_after_print:
             input("Press Enter to continue...")
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
+    except UnicodeDecodeError:
+        print("Error: Unable to decode the file with the detected encoding.")
+    except csv.Error as e:
+        print(f"CSV parsing error: {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"An unexpected error occurred: {e}")
 
 def browse_file():
     """Opens a file dialog to select a CSV file."""
