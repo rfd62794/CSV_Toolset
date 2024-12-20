@@ -413,17 +413,15 @@ def csv_stats(filename, pause_after_print=True):
     try:
         file_size, encoding = get_file_info(filename)
         start_time = time.time()
-        data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names = analyze_data(filename, encoding)
+        data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names = analyze_data_with_pandas(filename, encoding)
         if num_rows == 0:
             print("The CSV file is empty.")
             return
         elapsed_time = time.time() - start_time
         print(f"\nData analysis completed in {elapsed_time:.2f} seconds")
 
-        # Print static information
-        print_static_info(filename, file_size, encoding, column_names, num_rows)
-        print_data_completeness_summary(null_counts, num_rows)
-        print_top_frequent_values(value_counts)
+        # Generate and print summary report
+        generate_summary_report(file_size, encoding, column_names, num_rows, data_types, unique_values, null_counts, value_counts, numeric_stats)
 
         save_results(file_size, encoding, column_names, num_rows,
                      data_types, unique_values, null_counts, value_counts, numeric_stats)
