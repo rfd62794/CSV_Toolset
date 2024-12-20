@@ -276,8 +276,12 @@ def prompt_user_for_output():
     print("2. Text format")
     print("3. Both")
     print("4. None")
-    choice = input("Enter your choice (1/2/3/4): ")
-    return choice
+    while True:
+        choice = input("Enter your choice (1/2/3/4): ")
+        if choice in {'1', '2', '3', '4'}:
+            return choice
+        else:
+            print("Invalid choice. Please enter 1, 2, 3, or 4.")
 
 def get_output_file_path(file_type):
     while True:
