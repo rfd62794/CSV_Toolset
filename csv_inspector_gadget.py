@@ -523,5 +523,8 @@ def display_numeric_column_stats(numeric_stats):
     for column, stats in numeric_stats.items():
         print(f"  {column}: {stats}")
 
+def show_error_message(message):
+    tk.messagebox.showerror("Error", message)
+
 if __name__ == "__main__":
     browse_file()
