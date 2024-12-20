@@ -188,7 +188,7 @@ def print_data_completeness(column_names, null_counts, num_rows):
         non_null_percent = (1 - (null_counts[col] / num_rows)) * 100 if num_rows > 0 else 0
         print(f"  {col}: {non_null_percent:.2f}%")
 
-def csv_stats(filename, pause_after_print=True):
+def csv_stats(filename):
     """
     Main function to orchestrate the CSV analysis.
 
@@ -210,8 +210,7 @@ def csv_stats(filename, pause_after_print=True):
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
-        if pause_after_print:
-            input("Press Enter to continue...")
+        input("Press Enter to continue...")
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
