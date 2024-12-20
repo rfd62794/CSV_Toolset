@@ -86,29 +86,40 @@ def detect_data_type(value):
             float(value)
             return float
         except ValueError:
-            date_patterns = [
-                r'\d{4}-\d{2}-\d{2}',  # Date (YYYY-MM-DD)
-                r'\d{2}/\d{2}/\d{4}'   # Date (MM/DD/YYYY)
-            ]
-            for pattern in date_patterns:
-                if re.match(pattern, value):
-                    return 'date'
-            if re.match(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', value):  # Email
-                return 'email'
-            elif re.match(r'https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)', value):  # URL
-                return 'url'
-            elif re.match(r'(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', value):  # Phone number (US)
-                return 'phone'
-            elif re.match(r'^(?:\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', value):  # Phone number (International)
-                return 'phone'
-            elif re.match(r'^(?:[A-Z]{1,2}\d{1,2}[A-Z]?)\s*\d[A-Z]{2}$', value, re.IGNORECASE):  # UK Postcode
-                return 'postcode'
-            elif value.lower() in ['true', 'false']:  # Boolean
-                return 'boolean'
-            elif re.match(r'\d{2}:\d{2}(:\d{2})?', value):  # Time (HH:MM or HH:MM:SS)
-                return 'time'
-            else:
-                return str
+            # Define patterns for different data types
+            patterns = {
+                'date': [
+                    r'\d{4}-\d{2}-\d{2}',  # Date (YYYY-MM-DD)
+                    r'\d{2}/\d{2}/\d{4}'   # Date (MM/DD/YYYY)
+                ],
+                'email': [
+                    r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+                ],
+                'url': [
+                    r'https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+                ],
+                'phone': [
+                    r'(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',  # US Phone number
+                    r'^(?:\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'  # International Phone number
+                ],
+                'postcode': [
+                    r'^(?:[A-Z]{1,2}\d{1,2}[A-Z]?)\s*\d[A-Z]{2}$'  # UK Postcode
+                ],
+                'boolean': [
+                    r'^(true|false)$',  # Boolean
+                ],
+                'time': [
+                    r'\d{2}:\d{2}(:\d{2})?'  # Time (HH:MM or HH:MM:SS)
+                ]
+            }
+
+            # Check each pattern list
+            for data_type, pattern_list in patterns.items():
+                for pattern in pattern_list:
+                    if re.match(pattern, value, re.IGNORECASE):
+                        return data_type
+
+            return str
 
 def update_numeric_stats(numeric_stats, column_name, value):
     num_value = convert_to_numeric(value)
