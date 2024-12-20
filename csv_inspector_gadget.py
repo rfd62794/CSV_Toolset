@@ -532,5 +532,28 @@ def display_numeric_column_stats(numeric_stats):
 def show_error_message(message):
     tk.messagebox.showerror("Error", message)
 
+def generate_summary_report(file_size, encoding, column_names, num_rows, data_types, unique_values, null_counts, value_counts, numeric_stats):
+    print("\n--- Summary Report ---")
+    print(f"File size: {file_size} bytes")
+    print(f"Detected encoding: {encoding}")
+    print(f"Number of columns: {len(column_names)}")
+    print(f"Number of rows: {num_rows}\n")
+
+    print("Data types (with pattern matching):")
+    for column, types in data_types.items():
+        print(f"  {column}: {', '.join(types)}")
+
+    print("\nUnique values count per column:")
+    for column, count in unique_values.items():
+        print(f"  {column}: {count}")
+
+    print("\nNull value counts per column:")
+    for column, count in null_counts.items():
+        print(f"  {column}: {count}")
+
+    print("\nNumeric column statistics:")
+    for column, stats in numeric_stats.items():
+        print(f"  {column}: min={stats['min']}, max={stats['max']}, mean={stats['mean']:.2f}, std_dev={stats['std_dev']:.2f}")
+
 if __name__ == "__main__":
     browse_file()
