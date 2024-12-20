@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import filedialog
 import statistics
 import pandas as pd
+import psutil
 
 def get_file_info(filename):
     """
@@ -32,7 +33,47 @@ def detect_delimiter(filename, encoding):
         sniffer = csv.Sniffer()
         return sniffer.sniff(sample).delimiter
 
+def estimate_row_size(filename, encoding, sample_size=100):
+    """
+    Estimates the average row size by reading a sample of rows.
+
+    Args:
+      filename (str): The path to the CSV file.
+      encoding (str): The file encoding.
+      sample_size (int): The number of rows to sample.
+
+    Returns:
+      int: Estimated average row size in bytes.
+    """
+    with open(filename, 'r', encoding=encoding) as f:
+        reader = csv.reader(f)
+        sample_rows = [next(reader) for _ in range(sample_size)]
+        total_size = sum(len(','.join(row).encode(encoding)) for row in sample_rows)
+        average_row_size = total_size / sample_size
+    return average_row_size
+
+def estimate_chunk_size(filename, encoding):
+    """
+    Estimates an optimal chunk size based on file size and available system memory.
+
+    Args:
+      filename (str): The path to the CSV file.
+      encoding (str): The file encoding.
+
+    Returns:
+      int: Estimated chunk size in number of rows.
+    """
+    available_memory = psutil.virtual_memory().available
+    average_row_size = estimate_row_size(filename, encoding)
+    # Use up to 10% of available memory for processing
+    max_memory_usage = available_memory * 0.1
+    # Calculate the number of rows that can fit in the max memory usage
+    chunk_size = int(max_memory_usage / average_row_size)
+    return max(chunk_size, 1)  # Ensure at least one row per chunk
+
 def analyze_data(filename, encoding):
+    chunk_size = estimate_chunk_size(filename, encoding)
+    print(f"Using chunk size: {chunk_size} rows")
     delimiter = detect_delimiter(filename, encoding)
     with open(filename, 'r', encoding=encoding) as f:
         reader = csv.reader(f, delimiter=delimiter)
