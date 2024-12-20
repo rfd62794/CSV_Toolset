@@ -133,49 +133,48 @@ def update_numeric_stats(numeric_stats, column_name, value):
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
-    """
-    Prints the gathered statistics to the console.
+    print_file_info(file_size, encoding)
+    print_data_overview(column_names, num_rows)
+    print_data_types(data_types)
+    print_unique_values(unique_values)
+    print_null_counts(null_counts)
+    print_value_counts(value_counts)
+    print_numeric_stats(numeric_stats)
+    print_data_completeness(column_names, null_counts, num_rows)
 
-    Args:
-      file_size (int): The size of the file in bytes.
-      encoding (str): The encoding of the file.
-      column_names (list): The names of the columns.
-      num_rows (int): The number of rows in the data.
-      data_types (dict): The detected data types for each column.
-      unique_values (dict): The unique values for each column.
-      null_counts (dict): The null value counts for each column.
-      value_counts (dict): The value counts for each column.
-      numeric_stats (dict): The numeric statistics for each column.
-    """
+def print_file_info(file_size, encoding):
     print("\n--- File Stats ---")
     print(f"File size: {file_size} bytes")
     print(f"Detected encoding: {encoding}")
 
+def print_data_overview(column_names, num_rows):
     print("\n--- Data Stats ---")
     print(f"Column names: {column_names}")
     print(f"Number of rows: {num_rows}")
 
+def print_data_types(data_types):
     print("\nData types (with pattern matching):")
     for col, types in data_types.items():
         type_names = [t.__name__ if isinstance(t, type) else t for t in types]
         print(f"  {col}: {', '.join(type_names)}")
 
+def print_unique_values(unique_values):
     print("\nUnique values:")
     for col, values in unique_values.items():
         print(f"  {col}: {len(values)}")
 
+def print_null_counts(null_counts):
     print("\nNull value counts:")
     for col, count in null_counts.items():
         print(f"  {col}: {count}")
 
-    # --- Advanced Stats ---
-    print("\n--- Advanced Stats ---")
-
+def print_value_counts(value_counts):
     print("\nMost frequent values:")
     for col, counts in value_counts.items():
         top_5_values = counts.most_common(5)
         print(f"  {col}: {top_5_values}")
 
+def print_numeric_stats(numeric_stats):
     print("\nNumeric column statistics:")
     for col, stats in numeric_stats.items():
         if 'values' in stats:
@@ -183,15 +182,11 @@ def print_stats(file_size, encoding, column_names, num_rows,
             stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
         print(f"  {col}: {stats}")
 
-    # --- Data Profiling ---
-    print("\n--- Data Profiling ---")
-    
+def print_data_completeness(column_names, null_counts, num_rows):
     print("\nData Completeness:")
     for col in column_names:
         non_null_percent = (1 - (null_counts[col] / num_rows)) * 100 if num_rows > 0 else 0
         print(f"  {col}: {non_null_percent:.2f}%")
-
-    # (You can add more data profiling features here)
 
 def csv_stats(filename):
     """
