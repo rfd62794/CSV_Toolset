@@ -107,29 +107,27 @@ def detect_data_type(value):
                 return str
 
 def update_numeric_stats(numeric_stats, column_name, value):
-    """
-    Updates the numeric statistics for a column.
+    num_value = convert_to_numeric(value)
+    if num_value is not None:
+        update_stats(numeric_stats[column_name], num_value)
 
-    Args:
-      numeric_stats (dict): A dictionary to store numeric stats.
-      column_name (str): The name of the column.
-      value (str): The value to analyze.
-    """
+def convert_to_numeric(value):
     try:
-        num_value = int(value)
+        return int(value)
     except ValueError:
         try:
-            num_value = float(value)
+            return float(value)
         except ValueError:
-            return  # Not a numeric value
+            return None
 
-    numeric_stats[column_name].setdefault('count', 0)
-    numeric_stats[column_name]['count'] += 1
-    numeric_stats[column_name].setdefault('min', num_value)
-    numeric_stats[column_name]['min'] = min(numeric_stats[column_name]['min'], num_value)
-    numeric_stats[column_name].setdefault('max', num_value)
-    numeric_stats[column_name]['max'] = max(numeric_stats[column_name]['max'], num_value)
-    numeric_stats[column_name].setdefault('values', []).append(num_value)
+def update_stats(stats, num_value):
+    stats.setdefault('count', 0)
+    stats['count'] += 1
+    stats.setdefault('min', num_value)
+    stats['min'] = min(stats['min'], num_value)
+    stats.setdefault('max', num_value)
+    stats['max'] = max(stats['max'], num_value)
+    stats.setdefault('values', []).append(num_value)
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
