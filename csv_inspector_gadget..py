@@ -52,6 +52,20 @@ def estimate_row_size(filename, encoding, sample_size=100):
         average_row_size = total_size / sample_size
     return average_row_size
 
+def estimate_total_rows(filename, encoding):
+    """
+    Estimates the total number of rows in the CSV file.
+
+    Args:
+      filename (str): The path to the CSV file.
+      encoding (str): The file encoding.
+
+    Returns:
+      int: Estimated total number of rows.
+    """
+    with open(filename, 'r', encoding=encoding) as f:
+        return sum(1 for _ in f) - 1  # Subtract 1 for the header row
+
 def estimate_chunk_size(filename, encoding):
     """
     Estimates an optimal chunk size based on file size and available system memory.
@@ -335,6 +349,9 @@ def csv_stats(filename, pause_after_print=True):
 
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
+
+        save_results(file_size, encoding, column_names, num_rows, 
+                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
         if pause_after_print:
             input("Press Enter to continue...")
