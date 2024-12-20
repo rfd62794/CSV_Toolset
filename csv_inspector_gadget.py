@@ -288,10 +288,11 @@ def prompt_user_for_output():
 def get_output_file_path(file_type):
     while True:
         file_path = input(f"Enter the destination path for {file_type} output (e.g., /path/to/results.{file_type}): ")
-        if os.path.isdir(os.path.dirname(file_path)) or os.path.dirname(file_path) == '':
+        directory = os.path.dirname(file_path)
+        if os.path.isdir(directory) and os.access(directory, os.W_OK):
             return file_path
         else:
-            print("Invalid directory. Please enter a valid path.")
+            print("Invalid directory or no write permission. Please enter a valid path.")
 
 def save_results(file_size, encoding, column_names, num_rows, 
                  data_types, unique_values, null_counts, value_counts, numeric_stats):
