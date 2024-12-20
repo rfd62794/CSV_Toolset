@@ -213,10 +213,21 @@ def update_stats(stats, num_value):
     stats['min'] = min(stats['min'], num_value)
     stats.setdefault('max', num_value)
     stats['max'] = max(stats['max'], num_value)
-    stats.setdefault('values', []).append(num_value)
-    if 'values' in stats:
-        stats['median'] = statistics.median(stats['values'])
-        stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
+    
+    # Online calculation of mean and variance
+    stats.setdefault('mean', 0)
+    stats.setdefault('M2', 0)  # Sum of squares of differences from the current mean
+    delta = num_value - stats['mean']
+    stats['mean'] += delta / stats['count']
+    delta2 = num_value - stats['mean']
+    stats['M2'] += delta * delta2
+    
+    if stats['count'] > 1:
+        stats['variance'] = stats['M2'] / (stats['count'] - 1)
+        stats['std_dev'] = stats['variance'] ** 0.5
+    else:
+        stats['variance'] = 0
+        stats['std_dev'] = 0
 
 def print_stats(file_size, encoding, column_names, num_rows, 
                 data_types, unique_values, null_counts, value_counts, numeric_stats):
