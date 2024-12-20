@@ -122,8 +122,12 @@ def update_numeric_stats(numeric_stats, column_name, value):
         except ValueError:
             return  # Not a numeric value
 
-    numeric_stats[column_name].setdefault('sum', 0)
-    numeric_stats[column_name]['sum'] += num_value
+    numeric_stats[column_name].setdefault('count', 0)
+    numeric_stats[column_name]['count'] += 1
+    numeric_stats[column_name].setdefault('min', num_value)
+    numeric_stats[column_name]['min'] = min(numeric_stats[column_name]['min'], num_value)
+    numeric_stats[column_name].setdefault('max', num_value)
+    numeric_stats[column_name]['max'] = max(numeric_stats[column_name]['max'], num_value)
 
 
 def print_stats(file_size, encoding, column_names, num_rows, 
