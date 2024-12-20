@@ -95,7 +95,7 @@ def estimate_chunk_size(filename, encoding):
     # Calculate the number of rows that can fit in the max memory usage
     chunk_size = int(max_memory_usage / average_row_size)
     # Ensure the chunk size is within a reasonable range
-    chunk_size = min(max(chunk_size, 1000), 100000)  # Set a minimum and maximum limit
+    chunk_size = min(max(chunk_size, 1000), 50000)  # Reduce the maximum limit
     return chunk_size
 
 def analyze_data(filename, encoding):
@@ -121,7 +121,7 @@ def analyze_data(filename, encoding):
             num_rows += 1
             process_row(row, column_names, data_types, unique_values, null_counts, value_counts, numeric_stats)
             if num_rows % chunk_size == 0:
-                print(f"Processed {num_rows} rows...")
+                logging.info(f"Processed {num_rows} rows...")
 
     return data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows, column_names
 
