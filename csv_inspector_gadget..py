@@ -79,11 +79,13 @@ def estimate_chunk_size(filename, encoding):
     """
     available_memory = psutil.virtual_memory().available
     average_row_size = estimate_row_size(filename, encoding)
-    # Use up to 10% of available memory for processing
-    max_memory_usage = available_memory * 0.1
+    # Use up to 5% of available memory for processing to reduce chunk size
+    max_memory_usage = available_memory * 0.05
     # Calculate the number of rows that can fit in the max memory usage
     chunk_size = int(max_memory_usage / average_row_size)
-    return max(chunk_size, 1)  # Ensure at least one row per chunk
+    # Ensure the chunk size is within a reasonable range
+    chunk_size = min(max(chunk_size, 1000), 100000)  # Set a minimum and maximum limit
+    return chunk_size
 
 def analyze_data(filename, encoding):
     chunk_size = estimate_chunk_size(filename, encoding)
