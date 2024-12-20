@@ -269,7 +269,6 @@ def csv_stats(filename, pause_after_print=True):
     """
     try:
         file_size, encoding = get_file_info(filename)
-
         start_time = time.time()
         data_types, unique_values, null_counts, value_counts, numeric_stats, num_rows = analyze_data(filename, encoding)
         if num_rows == 0:
@@ -281,9 +280,6 @@ def csv_stats(filename, pause_after_print=True):
 
         print_stats(file_size, encoding, column_names, num_rows,
                     data_types, unique_values, null_counts, value_counts, numeric_stats)
-
-        save_results(file_size, encoding, column_names, num_rows, 
-                     data_types, unique_values, null_counts, value_counts, numeric_stats)
 
         if pause_after_print:
             input("Press Enter to continue...")
