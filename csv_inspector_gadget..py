@@ -7,6 +7,7 @@ import time
 import tkinter as tk
 from tkinter import filedialog
 import statistics
+import pandas as pd
 
 def get_file_info(filename):
     """
@@ -110,6 +111,7 @@ def update_numeric_stats(numeric_stats, column_name, value):
     num_value = convert_to_numeric(value)
     if num_value is not None:
         update_stats(numeric_stats[column_name], num_value)
+        numeric_stats[column_name].setdefault('values', []).append(num_value)
 
 def convert_to_numeric(value):
     try:
