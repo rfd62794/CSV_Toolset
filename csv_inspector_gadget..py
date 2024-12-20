@@ -86,11 +86,14 @@ def detect_data_type(value):
             float(value)
             return float
         except ValueError:
-            if re.match(r'\d{4}-\d{2}-\d{2}', value):  # Date (YYYY-MM-DD)
-                return 'date'
-            elif re.match(r'\d{2}/\d{2}/\d{4}', value):  # Date (MM/DD/YYYY)
-                return 'date'
-            elif re.match(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', value):  # Email
+            date_patterns = [
+                r'\d{4}-\d{2}-\d{2}',  # Date (YYYY-MM-DD)
+                r'\d{2}/\d{2}/\d{4}'   # Date (MM/DD/YYYY)
+            ]
+            for pattern in date_patterns:
+                if re.match(pattern, value):
+                    return 'date'
+            if re.match(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', value):  # Email
                 return 'email'
             elif re.match(r'https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)', value):  # URL
                 return 'url'
