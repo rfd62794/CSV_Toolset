@@ -458,18 +458,26 @@ def browse_file():
         print("No file selected.")
 
 def analyze_data_with_pandas(filename, encoding):
-    chunk_size = 10000  # Example chunk size
+    chunk_size = 10000
     column_names = None
     num_rows = 0
-    total_rows = sum(1 for _ in open(filename)) - 1  # Subtract 1 for header
+    total_rows = sum(1 for _ in open(filename, 'rb')) - 1  # Subtract 1 for header
 
-    with tqdm(total=total_rows, desc="Processing CSV") as pbar:
-        for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size, error_bad_lines=False):
-            if column_names is None:
-                column_names = chunk.columns.tolist()
-            num_rows += len(chunk)
-            pbar.update(len(chunk))
-    
+    try:
+        with tqdm(total=total_rows, desc="Processing CSV") as pbar:
+            for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size):
+                if column_names is None:
+                    column_names = chunk.columns.tolist()
+                num_rows += len(chunk)
+                pbar.update(len(chunk))
+    except UnicodeDecodeError:
+        print(f"Warning: Unable to decode with {encoding}. Trying 'utf-8' as fallback.")
+        with tqdm(total=total_rows, desc="Processing CSV") as pbar:
+            for chunk in pd.read_csv(filename, encoding='utf-8', chunksize=chunk_size, error_bad_lines=False):
+                if column_names is None:
+                    column_names = chunk.columns.tolist()
+                num_rows += len(chunk)
+                pbar.update(len(chunk))
     return column_names, num_rows
 
 def print_stats_to_json(file_size, encoding, column_names, num_rows, 
