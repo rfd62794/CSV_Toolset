@@ -6,6 +6,7 @@ import re
 import time
 import tkinter as tk
 from tkinter import filedialog
+import statistics
 
 def get_file_info(filename):
     """
@@ -137,6 +138,7 @@ def update_numeric_stats(numeric_stats, column_name, value):
     numeric_stats[column_name]['min'] = min(numeric_stats[column_name]['min'], num_value)
     numeric_stats[column_name].setdefault('max', num_value)
     numeric_stats[column_name]['max'] = max(numeric_stats[column_name]['max'], num_value)
+    numeric_stats[column_name].setdefault('values', []).append(num_value)
 
 
 def print_stats(file_size, encoding, column_names, num_rows, 
@@ -186,7 +188,9 @@ def print_stats(file_size, encoding, column_names, num_rows,
 
     print("\nNumeric column statistics:")
     for col, stats in numeric_stats.items():
-        stats['mean'] = stats['sum'] / num_rows if num_rows > 0 else 0
+        if 'values' in stats:
+            stats['median'] = statistics.median(stats['values'])
+            stats['std_dev'] = statistics.stdev(stats['values']) if len(stats['values']) > 1 else 0
         print(f"  {col}: {stats}")
 
     # --- Data Profiling ---
