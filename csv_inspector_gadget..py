@@ -197,17 +197,25 @@ def prompt_user_for_output():
     choice = input("Enter your choice (1/2/3/4): ")
     return choice
 
+def get_output_file_path(file_type):
+    while True:
+        file_path = input(f"Enter the destination path for {file_type} output (e.g., /path/to/results.{file_type}): ")
+        if os.path.isdir(os.path.dirname(file_path)) or os.path.dirname(file_path) == '':
+            return file_path
+        else:
+            print("Invalid directory. Please enter a valid path.")
+
 def save_results(file_size, encoding, column_names, num_rows, 
                  data_types, unique_values, null_counts, value_counts, numeric_stats):
     choice = prompt_user_for_output()
     if choice == '1' or choice == '3':
-        output_file_json = input("Enter the filename for JSON output (e.g., results.json): ")
+        output_file_json = get_output_file_path('json')
         print_stats_to_json(file_size, encoding, column_names, num_rows, 
                             data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_json)
         print(f"Results saved to {output_file_json}")
 
     if choice == '2' or choice == '3':
-        output_file_txt = input("Enter the filename for text output (e.g., results.txt): ")
+        output_file_txt = get_output_file_path('txt')
         print_stats_to_text(file_size, encoding, column_names, num_rows, 
                             data_types, unique_values, null_counts, value_counts, numeric_stats, output_file_txt)
         print(f"Results saved to {output_file_txt}")
