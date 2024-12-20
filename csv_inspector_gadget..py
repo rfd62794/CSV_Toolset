@@ -39,7 +39,11 @@ def analyze_data(filename, encoding):
     """
     with open(filename, 'r', encoding=encoding) as f:
         reader = csv.reader(f)
-        column_names = next(reader)
+        try:
+            column_names = next(reader)
+        except StopIteration:
+            print("Error: The CSV file is empty.")
+            return {}, {}, {}, {}, {}, 0
 
         num_rows = 0
         data_types = defaultdict(set)
