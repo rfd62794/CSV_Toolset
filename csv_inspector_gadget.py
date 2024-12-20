@@ -11,6 +11,7 @@ import pandas as pd
 import psutil
 import logging
 import json
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -461,10 +462,15 @@ def analyze_data_with_pandas(filename, encoding):
     chunk_size = 10000  # Example chunk size
     column_names = None
     num_rows = 0
-    for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size):
-        if column_names is None:
-            column_names = chunk.columns.tolist()
-        num_rows += len(chunk)
+    total_rows = sum(1 for _ in open(filename)) - 1  # Subtract 1 for header
+
+    with tqdm(total=total_rows, desc="Processing CSV") as pbar:
+        for chunk in pd.read_csv(filename, encoding=encoding, chunksize=chunk_size):
+            if column_names is None:
+                column_names = chunk.columns.tolist()
+            num_rows += len(chunk)
+            pbar.update(len(chunk))
+    
     return column_names, num_rows
 
 def print_stats_to_json(file_size, encoding, column_names, num_rows, 
