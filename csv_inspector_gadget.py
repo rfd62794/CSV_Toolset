@@ -488,5 +488,40 @@ def print_stats_to_json(file_size, encoding, column_names, num_rows,
     with open(output_file, 'w') as f:
         json.dump(data, f, indent=4)
 
+def display_file_stats(file_size, encoding):
+    print("\n--- File Stats ---")
+    print(f"File size: {file_size} bytes")
+    print(f"Detected encoding: {encoding}")
+
+def display_data_stats(column_names, num_rows):
+    print("\n--- Data Stats ---")
+    print(f"Column names: {column_names}")
+    print(f"Number of rows: {num_rows}")
+
+def display_data_types(data_types):
+    print("\nData types (with pattern matching):")
+    for column, types in data_types.items():
+        print(f"  {column}: {', '.join(types)}")
+
+def display_unique_values(unique_values):
+    print("\nUnique values:")
+    for column, count in unique_values.items():
+        print(f"  {column}: {count}")
+
+def display_null_value_counts(null_value_counts):
+    print("\nNull value counts:")
+    for column, count in null_value_counts.items():
+        print(f"  {column}: {count}")
+
+def display_most_frequent_values(most_frequent_values):
+    print("\nMost frequent values:")
+    for column, values in most_frequent_values.items():
+        print(f"  {column}: {values}")
+
+def display_numeric_column_stats(numeric_stats):
+    print("\nNumeric column statistics:")
+    for column, stats in numeric_stats.items():
+        print(f"  {column}: {stats}")
+
 if __name__ == "__main__":
     browse_file()
