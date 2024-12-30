@@ -38,11 +38,23 @@ def reverse_csv_order():
             reader = csv.reader(csvfile)
             writer = csv.writer(outfile)
 
+            # Detect header
+            header = next(reader)  # Read the first row
+            csvfile.seek(0)  # Reset file pointer to the beginning
+            has_header = csv.Sniffer().has_header(csvfile.read(1024))
+            csvfile.seek(0)  # Reset again after sniffing
+
             # Read all rows into a list
             rows = list(reader)
 
-            # Write the rows in reverse order
-            writer.writerows(reversed(rows))
+            if has_header:
+                # Write the header first
+                writer.writerow(rows[0])
+                # Write the remaining rows in reverse order (excluding the header)
+                writer.writerows(reversed(rows[1:]))
+            else:
+                # Write the rows in reverse order
+                writer.writerows(reversed(rows))
 
         print(f"CSV file successfully reversed and saved to {output_file_path}")
 
