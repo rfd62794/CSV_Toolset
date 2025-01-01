@@ -106,6 +106,12 @@ class CSVToolkit(tk.Tk):
         appender = ColumnAppenderFrame(self.content)
         appender.pack(fill=tk.BOTH, expand=True)
     
+    def show_reformatter(self):
+        self.clear_content()
+        from tools.reformatter_frame import ReformatterFrame
+        reformatter = ReformatterFrame(self.content)
+        reformatter.pack(fill=tk.BOTH, expand=True)
+    
     # ... Additional tool methods ...
 
 if __name__ == "__main__":
