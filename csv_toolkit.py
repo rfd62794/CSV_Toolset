@@ -88,6 +88,12 @@ class CSVToolkit(tk.Tk):
         reverser = OrderReverserFrame(self.content)
         reverser.pack(fill=tk.BOTH, expand=True)
     
+    def show_sample_maker(self):
+        self.clear_content()
+        from tools.sample_maker_frame import SampleMakerFrame
+        sampler = SampleMakerFrame(self.content)
+        sampler.pack(fill=tk.BOTH, expand=True)
+    
     # ... Additional tool methods ...
 
 if __name__ == "__main__":
