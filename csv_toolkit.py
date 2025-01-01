@@ -94,6 +94,12 @@ class CSVToolkit(tk.Tk):
         sampler = SampleMakerFrame(self.content)
         sampler.pack(fill=tk.BOTH, expand=True)
     
+    def show_phone_extractor(self):
+        self.clear_content()
+        from tools.phone_extractor_frame import PhoneExtractorFrame
+        extractor = PhoneExtractorFrame(self.content)
+        extractor.pack(fill=tk.BOTH, expand=True)
+    
     # ... Additional tool methods ...
 
 if __name__ == "__main__":
