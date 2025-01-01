@@ -1,32 +1,49 @@
+from typing import Optional, List, Dict, Any
 import pandas as pd
-import chardet
+from .config import ToolConfig
 
 class DataReader:
-    """Handles all CSV file reading operations"""
+    """Handles CSV file reading operations"""
     
-    @staticmethod
-    def detect_encoding(file_path):
-        """Detects file encoding"""
-        with open(file_path, 'rb') as f:
-            raw_data = f.read()
-            result = chardet.detect(raw_data)
-            return result['encoding']
+    def __init__(self):
+        self.config = ToolConfig()
     
-    @classmethod
-    def read_csv(cls, file_path, **options):
-        """Reads CSV with automatic encoding detection"""
-        encoding = options.pop('encoding', None)
-        if not encoding:
-            encoding = cls.detect_encoding(file_path)
-        
-        return pd.read_csv(file_path, encoding=encoding, **options)
+    def read_csv(self, file_path: str, **kwargs) -> pd.DataFrame:
+        """Reads CSV file with default settings"""
+        default_args = {
+            'encoding': self.config.FILE_SETTINGS['encoding'],
+            'on_bad_lines': 'warn'
+        }
+        # Override defaults with provided kwargs
+        args = {**default_args, **kwargs}
+        return pd.read_csv(file_path, **args)
     
-    @classmethod
-    def read_preview(cls, file_path, nrows=5):
-        """Reads first few rows for preview"""
-        return cls.read_csv(file_path, nrows=nrows)
+    def read_csv_chunked(self, file_path: str, chunk_size: Optional[int] = None) -> pd.DataFrame:
+        """Reads large CSV files in chunks"""
+        if chunk_size is None:
+            chunk_size = self.config.FILE_SETTINGS['chunk_size']
+            
+        chunks = []
+        for chunk in pd.read_csv(
+            file_path, 
+            chunksize=chunk_size,
+            encoding=self.config.FILE_SETTINGS['encoding']
+        ):
+            chunks.append(chunk)
+        return pd.concat(chunks)
     
-    @classmethod
-    def get_columns(cls, file_path):
-        """Gets column names without reading entire file"""
-        return cls.read_csv(file_path, nrows=0).columns.tolist() 
+    def get_columns(self, file_path: str) -> List[str]:
+        """Gets column names from CSV file"""
+        return pd.read_csv(
+            file_path, 
+            nrows=0, 
+            encoding=self.config.FILE_SETTINGS['encoding']
+        ).columns.tolist()
+    
+    def preview_data(self, file_path: str, nrows: int = 5) -> pd.DataFrame:
+        """Gets preview of CSV data"""
+        return pd.read_csv(
+            file_path,
+            nrows=nrows,
+            encoding=self.config.FILE_SETTINGS['encoding']
+        ) 
