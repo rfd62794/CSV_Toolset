@@ -1,6 +1,8 @@
 from ..utils.data_reader import DataReader
 from ..utils.data_writer import DataWriter
+from ..utils.data_validator import DataValidator
 from ..utils.progress_tracker import ProgressTracker
+from ..utils.config import ToolConfig
 
 class BaseProcessor:
     """Base class for all data processors"""
@@ -8,7 +10,9 @@ class BaseProcessor:
     def __init__(self):
         self.reader = DataReader()
         self.writer = DataWriter()
+        self.validator = DataValidator()
         self.progress = None
+        self.config = ToolConfig()
     
     def set_progress_callback(self, callback):
         """Sets up progress tracking"""
@@ -23,21 +27,42 @@ class BaseProcessor:
         """Template method for file processing"""
         try:
             # Read input
-            self.update_progress(0, "Reading file...")
+            self.update_progress(
+                self.config.PROGRESS_STEPS['READ'],
+                "Reading file..."
+            )
             df = self.reader.read_csv(input_file)
             
+            # Validate input if needed
+            if hasattr(self, 'required_columns'):
+                valid, error = self.validator.validate_columns_exist(
+                    df, 
+                    self.required_columns
+                )
+                if not valid:
+                    raise ValueError(error)
+            
             # Process data
-            self.update_progress(33, "Processing data...")
+            self.update_progress(
+                self.config.PROGRESS_STEPS['PROCESS'],
+                "Processing data..."
+            )
             result = self._process_data(df, **options)
             
             # Write output
-            self.update_progress(66, "Saving results...")
+            self.update_progress(
+                self.config.PROGRESS_STEPS['SAVE'],
+                "Saving results..."
+            )
             success, error = self.writer.write_csv(result, output_file)
             
             if not success:
-                raise Exception(f"Failed to save file: {error}")
+                raise Exception(self.config.ERRORS['SAVE_FAILED'].format(error))
             
-            self.update_progress(100, "Processing complete!")
+            self.update_progress(
+                self.config.PROGRESS_STEPS['COMPLETE'],
+                "Processing complete!"
+            )
             return True, None
             
         except Exception as e:
