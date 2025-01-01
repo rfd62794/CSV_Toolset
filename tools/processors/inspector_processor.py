@@ -1,10 +1,11 @@
 from ..utils.data_reader import DataReader
 from ..utils.data_analyzer import DataAnalyzer
+from .base_processor import BaseProcessor
 import os
 
-class InspectorProcessor:
+class InspectorProcessor(BaseProcessor):
     def __init__(self):
-        self.reader = DataReader()
+        super().__init__()
         self.analyzer = DataAnalyzer()
     
     def get_basic_info(self, file_path):
