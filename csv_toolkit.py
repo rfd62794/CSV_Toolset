@@ -1,7 +1,10 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import os
-from functools import partial
+from tkinter import ttk
+from tools.utils.tool_manager import ToolManager
+from tools.frames import (
+    InspectorFrame, SweeperFrame, PhoneFrame, 
+    SampleFrame, ReverserFrame, AppenderFrame
+)
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -10,109 +13,94 @@ class CSVToolkit(tk.Tk):
         self.title("CSV Toolkit")
         self.geometry("800x600")
         
+        # Initialize tool manager
+        self.tool_manager = ToolManager()
+        self.register_tools()
+        
+        self.create_widgets()
+        
+    def register_tools(self):
+        """Registers available tools with categories"""
+        # Analysis tools
+        self.tool_manager.register_tool(InspectorFrame, "Analysis")
+        
+        # Data cleaning tools
+        self.tool_manager.register_tool(SweeperFrame, "Data Cleaning")
+        self.tool_manager.register_tool(PhoneFrame, "Data Cleaning")
+        
+        # Data manipulation tools
+        self.tool_manager.register_tool(SampleFrame, "Data Manipulation")
+        self.tool_manager.register_tool(ReverserFrame, "Data Manipulation")
+        self.tool_manager.register_tool(AppenderFrame, "Data Manipulation")
+    
+    def create_widgets(self):
+        """Creates main application widgets"""
         # Create main container
         self.main_container = ttk.Frame(self)
-        self.main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.main_container.pack(fill=tk.BOTH, expand=True)
         
-        # Create sidebar for tool selection
-        self.sidebar = ttk.Frame(self.main_container, width=200)
-        self.sidebar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+        # Create tool selection frame
+        self.tool_frame = ttk.LabelFrame(self.main_container, text="Tools")
+        self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         
-        # Create main content area
-        self.content = ttk.Frame(self.main_container)
-        self.content.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Create notebook for categorized tools
+        self.tool_notebook = ttk.Notebook(self.tool_frame)
+        self.tool_notebook.pack(fill=tk.BOTH, expand=True)
         
-        # Tool registry - maps tool names to their functions
-        self.tools = {
-            "CSV Inspector": self.show_inspector,
-            "Column Sweeper": self.show_column_sweeper,
-            "Order Reverser": self.show_order_reverser,
-            "Sample Maker": self.show_sample_maker,
-            "Phone Extractor": self.show_phone_extractor,
-            "Column Appender": self.show_column_appender,
-            "Data Reformatter": self.show_reformatter
-        }
+        # Add tool categories
+        self.category_frames = {}
+        for category, tools in self.tool_manager.get_categories().items():
+            frame = ttk.Frame(self.tool_notebook)
+            self.tool_notebook.add(frame, text=category)
+            
+            for tool_name in tools:
+                btn = ttk.Button(
+                    frame,
+                    text=tool_name,
+                    command=lambda t=tool_name: self.show_tool(t)
+                )
+                btn.pack(padx=5, pady=2, fill=tk.X)
+            
+            self.category_frames[category] = frame
         
-        self.create_sidebar()
-        self.create_welcome_screen()
+        # Create tool display area
+        self.tool_display = ttk.Frame(self.main_container)
+        self.tool_display.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-    def create_sidebar(self):
-        # Create tool selection buttons
-        ttk.Label(self.sidebar, text="Available Tools", font=('Helvetica', 12, 'bold')).pack(pady=(0, 10))
-        
-        for tool_name in self.tools.keys():
-            btn = ttk.Button(
-                self.sidebar,
-                text=tool_name,
-                command=partial(self.tools[tool_name])
-            )
-            btn.pack(fill=tk.X, pady=2)
+        # Show welcome message
+        self.show_welcome()
     
-    def create_welcome_screen(self):
-        welcome = ttk.Frame(self.content)
-        welcome.pack(fill=tk.BOTH, expand=True)
-        
-        ttk.Label(
-            welcome,
-            text="Welcome to CSV Toolkit",
-            font=('Helvetica', 16, 'bold')
-        ).pack(pady=20)
-        
-        ttk.Label(
-            welcome,
-            text="Select a tool from the sidebar to begin.",
-            font=('Helvetica', 12)
-        ).pack()
-    
-    def clear_content(self):
-        """Clear all widgets from the content frame"""
-        for widget in self.content.winfo_children():
+    def show_welcome(self):
+        """Shows welcome message"""
+        for widget in self.tool_display.winfo_children():
             widget.destroy()
+            
+        welcome = ttk.Label(
+            self.tool_display,
+            text="Welcome to CSV Toolkit!\n\nSelect a tool to begin.",
+            justify=tk.CENTER
+        )
+        welcome.pack(expand=True)
     
-    # Tool display methods
-    def show_inspector(self):
-        self.clear_content()
-        from tools.inspector_frame import InspectorFrame
-        inspector = InspectorFrame(self.content)
-        inspector.pack(fill=tk.BOTH, expand=True)
-    
-    def show_column_sweeper(self):
-        self.clear_content()
-        from tools.column_sweeper_frame import ColumnSweeperFrame
-        sweeper = ColumnSweeperFrame(self.content)
-        sweeper.pack(fill=tk.BOTH, expand=True)
-    
-    def show_order_reverser(self):
-        self.clear_content()
-        from tools.order_reverser_frame import OrderReverserFrame
-        reverser = OrderReverserFrame(self.content)
-        reverser.pack(fill=tk.BOTH, expand=True)
-    
-    def show_sample_maker(self):
-        self.clear_content()
-        from tools.sample_maker_frame import SampleMakerFrame
-        sampler = SampleMakerFrame(self.content)
-        sampler.pack(fill=tk.BOTH, expand=True)
-    
-    def show_phone_extractor(self):
-        self.clear_content()
-        from tools.phone_extractor_frame import PhoneExtractorFrame
-        extractor = PhoneExtractorFrame(self.content)
-        extractor.pack(fill=tk.BOTH, expand=True)
-    
-    def show_column_appender(self):
-        self.clear_content()
-        from tools.column_appender_frame import ColumnAppenderFrame
-        appender = ColumnAppenderFrame(self.content)
-        appender.pack(fill=tk.BOTH, expand=True)
-    
-    def show_reformatter(self):
-        self.clear_content()
-        from tools.reformatter_frame import ReformatterFrame
-        reformatter = ReformatterFrame(self.content)
-        reformatter.pack(fill=tk.BOTH, expand=True)
-    
-    # ... Additional tool methods ...
+    def show_tool(self, tool_name):
+        """Shows selected tool"""
+        # Clear current tool
+        for widget in self.tool_display.winfo_children():
+            widget.destroy()
+        
+        try:
+            # Create and show new tool
+            tool = self.tool_manager.create_tool(tool_name, self.tool_display)
+            tool.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+            
+        except Exception as e:
+            # Show error if tool creation fails
+            error = ttk.Label(
+                self.tool_display,
+                text=f"Error loading tool: {str(e)}",
+                foreground='red'
+            )
+            error.pack(expand=True)
 
 if __name__ == "__main__":
     app = CSVToolkit()
