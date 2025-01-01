@@ -2,10 +2,12 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
 from .base_tool import BaseToolFrame
+from .processors.order_processor import OrderProcessor
 
 class OrderReverserFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = OrderProcessor()
         self.create_tool_specific_widgets()
         
     def get_tool_name(self):
@@ -21,7 +23,8 @@ class OrderReverserFrame(BaseToolFrame):
         ttk.Checkbutton(
             self.options_frame,
             text="Preserve header row",
-            variable=self.header_var
+            variable=self.header_var,
+            command=self.update_preview
         ).pack(padx=5, pady=5)
         
         # Preview frame
@@ -32,7 +35,7 @@ class OrderReverserFrame(BaseToolFrame):
         self.preview_text = tk.Text(
             self.preview_frame,
             wrap=tk.NONE,
-            height=10,
+            height=20,
             width=50
         )
         self.preview_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -70,22 +73,33 @@ class OrderReverserFrame(BaseToolFrame):
         self.file_path_var.trace_add('write', self.update_preview)
         
     def update_preview(self, *args):
-        """Updates the preview when a file is selected"""
+        """Updates the preview when a file is selected or options change"""
         if self.input_file:
             try:
-                self.update_progress(0, "Reading file for preview...")
-                # Read first and last few rows
-                df_head = pd.read_csv(self.input_file, nrows=5)
-                df_tail = pd.read_csv(self.input_file).tail(5)
+                self.update_progress(0, "Generating preview...")
+                
+                preview_data = self.processor.preview_data(
+                    self.input_file,
+                    preserve_header=self.header_var.get()
+                )
                 
                 # Update preview text
                 self.preview_text.config(state=tk.NORMAL)
                 self.preview_text.delete('1.0', tk.END)
                 
+                # Show original data
+                self.preview_text.insert('1.0', "Original Data:\n")
                 self.preview_text.insert(tk.END, "First 5 rows:\n")
-                self.preview_text.insert(tk.END, df_head.to_string())
+                self.preview_text.insert(tk.END, preview_data['original']['first'].to_string())
                 self.preview_text.insert(tk.END, "\n\nLast 5 rows:\n")
-                self.preview_text.insert(tk.END, df_tail.to_string())
+                self.preview_text.insert(tk.END, preview_data['original']['last'].to_string())
+                
+                # Show reversed data
+                self.preview_text.insert(tk.END, "\n\nReversed Data:\n")
+                self.preview_text.insert(tk.END, "First 5 rows:\n")
+                self.preview_text.insert(tk.END, preview_data['reversed']['first'].to_string())
+                self.preview_text.insert(tk.END, "\n\nLast 5 rows:\n")
+                self.preview_text.insert(tk.END, preview_data['reversed']['last'].to_string())
                 
                 self.preview_text.config(state=tk.DISABLED)
                 self.status_var.set("Ready to reverse order")
@@ -102,19 +116,14 @@ class OrderReverserFrame(BaseToolFrame):
         try:
             self.update_progress(0, "Reading file...")
             df = pd.read_csv(self.input_file)
-            total_rows = len(df)
             
             self.update_progress(33, "Reversing order...")
             
-            if self.header_var.get():
-                # Preserve header by excluding it from the reversal
-                df_reversed = pd.concat([
-                    df.iloc[:1],  # Keep header row
-                    df.iloc[1:].iloc[::-1]  # Reverse all other rows
-                ])
-            else:
-                # Reverse all rows including header
-                df_reversed = df.iloc[::-1]
+            # Reverse the order
+            df_reversed = self.processor.reverse_order(
+                df,
+                preserve_header=self.header_var.get()
+            )
             
             self.update_progress(66, "Saving results...")
             
@@ -124,11 +133,11 @@ class OrderReverserFrame(BaseToolFrame):
                 "reversed"
             )
             
-            # Save the processed data
+            # Save the reversed data
             df_reversed.to_csv(output_file, index=False)
             
             self.update_progress(100, 
-                f"Complete! Reversed {total_rows:,} rows. "
+                f"Complete! Reversed {len(df):,} rows. "
                 f"Saved to: {output_file}"
             )
             

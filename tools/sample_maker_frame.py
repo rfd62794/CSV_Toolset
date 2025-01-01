@@ -2,14 +2,23 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
 from .base_tool import BaseToolFrame
+from .processors.sample_processor import SampleProcessor
 
 class SampleMakerFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = SampleProcessor()
         self.create_tool_specific_widgets()
         
     def get_tool_name(self):
         return "Sample Maker"
+        
+    def get_sample_options(self):
+        """Gets current sampling options from UI"""
+        return {
+            'random': self.random_var.get(),
+            'keep_header': self.header_var.get()
+        }
         
     def create_tool_specific_widgets(self):
         # Sample size frame
@@ -89,19 +98,16 @@ class SampleMakerFrame(BaseToolFrame):
             try:
                 self.update_progress(0, "Reading file info...")
                 
-                # Get basic file info
-                total_rows = sum(1 for _ in open(self.input_file)) - 1  # Subtract header
-                df_sample = pd.read_csv(self.input_file, nrows=1)
-                num_columns = len(df_sample.columns)
+                file_info = self.processor.get_file_info(self.input_file)
                 
                 # Update info text
                 self.info_text.config(state=tk.NORMAL)
                 self.info_text.delete('1.0', tk.END)
                 
                 info = [
-                    f"Total rows: {total_rows:,}",
-                    f"Number of columns: {num_columns}",
-                    f"\nEnter the desired sample size (1 to {total_rows:,})",
+                    f"Total rows: {file_info['total_rows']:,}",
+                    f"Number of columns: {file_info['num_columns']}",
+                    f"\nEnter the desired sample size (1 to {file_info['total_rows']:,})",
                     "\nNote: Header row will be preserved by default"
                 ]
                 
@@ -121,48 +127,32 @@ class SampleMakerFrame(BaseToolFrame):
             messagebox.showwarning("Warning", "Please select a file first")
             return
             
+        sample_size = self.size_var.get()
+        if not sample_size:
+            messagebox.showwarning("Warning", "Please enter a sample size")
+            return
+            
         try:
-            sample_size = self.size_var.get()
-            if not sample_size:
-                messagebox.showwarning("Warning", "Please enter a sample size")
+            # Validate sample size
+            is_valid, error = self.processor.validate_sample_size(
+                self.input_file,
+                sample_size
+            )
+            
+            if not is_valid:
+                messagebox.showwarning("Warning", error)
                 return
                 
             sample_size = int(sample_size)
-            if sample_size < 1:
-                messagebox.showwarning("Warning", "Sample size must be at least 1")
-                return
-                
-            self.update_progress(0, "Reading file...")
-            
-            # Count total rows (excluding header)
-            total_rows = sum(1 for _ in open(self.input_file)) - 1
-            
-            if sample_size > total_rows:
-                messagebox.showwarning(
-                    "Warning", 
-                    f"Sample size ({sample_size:,}) is larger than total rows ({total_rows:,})"
-                )
-                return
-                
             self.update_progress(33, "Creating sample...")
             
-            if self.random_var.get():
-                # Random sampling
-                df = pd.read_csv(self.input_file)
-                if self.header_var.get():
-                    header = df.iloc[:1]
-                    sample = df.iloc[1:].sample(n=sample_size)
-                    df_sample = pd.concat([header, sample])
-                else:
-                    df_sample = df.sample(n=sample_size)
-            else:
-                # Sequential sampling
-                skiprows = None if self.header_var.get() else 0
-                df_sample = pd.read_csv(
-                    self.input_file,
-                    nrows=sample_size,
-                    skiprows=skiprows
-                )
+            # Get sampling options and create sample
+            options = self.get_sample_options()
+            df_sample = self.processor.create_sample(
+                self.input_file,
+                sample_size,
+                **options
+            )
             
             self.update_progress(66, "Saving sample...")
             
