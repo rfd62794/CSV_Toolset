@@ -72,8 +72,10 @@ class CSVToolkit(tk.Tk):
     # Tool display methods
     def show_inspector(self):
         self.clear_content()
-        # Import and show inspector interface
-        
+        from tools.inspector_frame import InspectorFrame
+        inspector = InspectorFrame(self.content)
+        inspector.pack(fill=tk.BOTH, expand=True)
+    
     def show_column_sweeper(self):
         self.clear_content()
         # Import and show column sweeper interface
