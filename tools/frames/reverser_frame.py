@@ -9,7 +9,8 @@ class ReverserFrame(BaseToolFrame):
         self.processor = ReverserProcessor()
         self.create_tool_specific_widgets()
         
-    def get_tool_name(self):
+    @classmethod
+    def get_tool_name(cls) -> str:
         return "Order Reverser"
         
     def create_tool_specific_widgets(self):

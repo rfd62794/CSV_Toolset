@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from typing import Optional, Callable
@@ -5,7 +6,7 @@ from ..utils.file_manager import FileManager
 from ..utils.data_writer import DataWriter
 from ..utils.config import ToolConfig
 
-class BaseToolFrame(ttk.Frame):
+class BaseToolFrame(ttk.Frame, ABC):
     """Base class for all tool frames"""
     
     def __init__(self, master):
@@ -24,9 +25,10 @@ class BaseToolFrame(ttk.Frame):
         self.create_common_widgets()
         
     @classmethod
+    @abstractmethod
     def get_tool_name(cls) -> str:
         """Returns the display name of the tool"""
-        raise NotImplementedError
+        pass
     
     def create_common_widgets(self):
         """Creates widgets common to all tools"""

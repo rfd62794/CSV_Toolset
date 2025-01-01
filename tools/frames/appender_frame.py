@@ -11,7 +11,8 @@ class AppenderFrame(BaseToolFrame):
         self.secondary_file = None
         self.create_tool_specific_widgets()
         
-    def get_tool_name(self):
+    @classmethod
+    def get_tool_name(cls) -> str:
         return "Column Appender"
         
     def create_tool_specific_widgets(self):

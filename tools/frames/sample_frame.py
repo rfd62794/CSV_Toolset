@@ -10,7 +10,8 @@ class SampleFrame(BaseToolFrame):
         self.processor = SampleProcessor()
         self.create_tool_specific_widgets()
         
-    def get_tool_name(self):
+    @classmethod
+    def get_tool_name(cls) -> str:
         return "Sample Maker"
         
     def create_tool_specific_widgets(self):

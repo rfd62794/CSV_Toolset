@@ -10,7 +10,7 @@ class ToolManager:
     
     def register_tool(self, tool_class: Type[BaseToolFrame], category: str = "General"):
         """Registers a tool with optional category"""
-        tool_name = tool_class.get_tool_name(None)  # Get static tool name
+        tool_name = tool_class.get_tool_name()
         self._tools[tool_name] = tool_class
         
         if category not in self._categories:
