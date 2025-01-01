@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from typing import List
 
 class DataTransformer:
     """Handles common DataFrame transformations"""
@@ -70,3 +71,18 @@ class DataTransformer:
             samples.append(sample)
             
         return pd.concat(samples) 
+    
+    @staticmethod
+    def filter_empty_values(df: pd.DataFrame, columns: List[str], 
+                          treat_empty_as_null: bool = True) -> pd.DataFrame:
+        """Filters rows with empty/null values in specified columns"""
+        df_clean = df.copy()
+        
+        if treat_empty_as_null:
+            # Consider empty strings as missing values
+            for col in columns:
+                df_clean = df_clean[df_clean[col].astype(str).str.strip() != '']
+        
+        # Remove rows with NaN values in selected columns
+        df_clean = df_clean.dropna(subset=columns)
+        return df_clean 

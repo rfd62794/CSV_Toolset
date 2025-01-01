@@ -1,4 +1,6 @@
 import re
+from typing import List, Optional, Callable
+import pandas as pd
 
 class PatternProcessor:
     """Handles text pattern matching and formatting"""
@@ -26,3 +28,27 @@ class PatternProcessor:
         if not text:
             return text
         return re.sub(f'[{re.escape(chars_to_remove)}]', '', text) 
+    
+    @staticmethod
+    def extract_matches(text: str, pattern: str, format_func: Optional[Callable] = None) -> List[str]:
+        """
+        Extracts and optionally formats pattern matches from text
+        
+        Args:
+            text: Input text
+            pattern: Regex pattern
+            format_func: Optional function to format matches
+            
+        Returns:
+            List of matched (and optionally formatted) strings
+        """
+        if pd.isna(text):
+            return []
+            
+        matches = list(re.finditer(pattern, str(text)))
+        if not matches:
+            return []
+            
+        if format_func:
+            return [format_func(m) for m in matches]
+        return [m.group(0) for m in matches] 
