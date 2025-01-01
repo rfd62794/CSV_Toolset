@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import pandas as pd
 from .base_tool import BaseToolFrame
+from .processors.sweeper_processor import SweeperProcessor
 
 class ColumnSweeperFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = SweeperProcessor()
         self.create_tool_specific_widgets()
         self.columns = []
         
@@ -63,10 +64,13 @@ class ColumnSweeperFrame(BaseToolFrame):
         if self.input_file:
             try:
                 self.update_progress(0, "Reading columns...")
-                df = pd.read_csv(self.input_file, nrows=0)  # Read only header
                 
-                self.column_listbox.delete(0, tk.END)  # Clear existing items
-                for col in df.columns:
+                # Get columns from processor
+                columns = self.processor.get_columns(self.input_file)
+                
+                # Update listbox
+                self.column_listbox.delete(0, tk.END)
+                for col in columns:
                     self.column_listbox.insert(tk.END, col)
                 
                 self.process_btn.config(state=tk.NORMAL)
@@ -86,21 +90,15 @@ class ColumnSweeperFrame(BaseToolFrame):
         selected_columns = [self.column_listbox.get(i) for i in selected_indices]
         
         try:
-            self.update_progress(0, "Reading file...")
-            df = pd.read_csv(self.input_file)
-            initial_rows = len(df)
+            # Process file with progress updates
+            df_clean, stats = self.processor.process_file(
+                self.input_file,
+                selected_columns,
+                treat_empty_as_null=self.empty_var.get(),
+                progress_callback=self.update_progress
+            )
             
-            self.update_progress(33, "Processing...")
-            
-            # Remove rows with missing data in selected columns
-            if self.empty_var.get():
-                # Consider empty strings as missing values
-                for col in selected_columns:
-                    df = df[df[col].astype(str).str.strip() != '']
-            
-            df = df.dropna(subset=selected_columns)
-            
-            self.update_progress(66, "Saving results...")
+            self.update_progress(80, "Saving results...")
             
             # Generate output filename
             output_file = self.file_manager.generate_output_path(
@@ -108,12 +106,11 @@ class ColumnSweeperFrame(BaseToolFrame):
                 f"swept_{len(selected_columns)}cols"
             )
             
-            # Save the processed data
-            df.to_csv(output_file, index=False)
+            # Save the cleaned data
+            df_clean.to_csv(output_file, index=False)
             
-            rows_removed = initial_rows - len(df)
             self.update_progress(100, 
-                f"Complete! Removed {rows_removed:,} rows. "
+                f"Complete! Removed {stats['rows_removed']:,} rows. "
                 f"Saved to: {output_file}"
             )
             
