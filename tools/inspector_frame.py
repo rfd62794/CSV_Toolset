@@ -1,12 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
-import pandas as pd
 from .base_tool import BaseToolFrame
-import os
+from .processors.inspector_processor import InspectorProcessor
 
 class InspectorFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = InspectorProcessor()
         self.create_tool_specific_widgets()
         
     def get_tool_name(self):
@@ -35,47 +35,23 @@ class InspectorFrame(BaseToolFrame):
         self.inspect_btn.pack(pady=10)
         
     def process_file(self):
+        """Analyzes and displays CSV statistics"""
         if not self.input_file:
             self.show_error("Please select a file first")
             return
             
         try:
-            self.update_progress(0, "Reading file...")
+            # Analyze the data with progress updates
+            stats = self.processor.analyze_data(
+                self.input_file,
+                self.update_progress
+            )
             
-            # Get basic file info
-            file_size = os.path.getsize(self.input_file)
-            encoding = self.csv_handler.detect_encoding(self.input_file)
+            # Format and display the statistics
+            formatted_stats = self.processor.format_stats(stats)
             
-            self.update_progress(20, "Analyzing data...")
-            
-            # Read with pandas for detailed analysis
-            df = pd.read_csv(self.input_file, encoding=encoding)
-            
-            self.update_progress(60, "Generating statistics...")
-            
-            # Generate stats
-            stats = [
-                f"File Statistics:",
-                f"- Size: {file_size:,} bytes",
-                f"- Encoding: {encoding}",
-                f"- Rows: {len(df):,}",
-                f"- Columns: {len(df.columns):,}",
-                "\nColumn Information:",
-            ]
-            
-            for col in df.columns:
-                stats.extend([
-                    f"\n{col}:",
-                    f"- Type: {df[col].dtype}",
-                    f"- Unique Values: {df[col].nunique():,}",
-                    f"- Null Count: {df[col].isnull().sum():,}",
-                ])
-                
-            self.update_progress(100, "Analysis complete!")
-            
-            # Display stats
             self.stats_text.delete('1.0', tk.END)
-            self.stats_text.insert('1.0', '\n'.join(stats))
+            self.stats_text.insert('1.0', formatted_stats)
             
         except Exception as e:
             self.show_error(str(e)) 
