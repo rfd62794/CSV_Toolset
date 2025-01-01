@@ -100,6 +100,12 @@ class CSVToolkit(tk.Tk):
         extractor = PhoneExtractorFrame(self.content)
         extractor.pack(fill=tk.BOTH, expand=True)
     
+    def show_column_appender(self):
+        self.clear_content()
+        from tools.column_appender_frame import ColumnAppenderFrame
+        appender = ColumnAppenderFrame(self.content)
+        appender.pack(fill=tk.BOTH, expand=True)
+    
     # ... Additional tool methods ...
 
 if __name__ == "__main__":
