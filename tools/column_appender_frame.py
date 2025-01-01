@@ -2,14 +2,24 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
 from .base_tool import BaseToolFrame
+from .processors.column_appender_processor import ColumnAppenderProcessor
 
 class ColumnAppenderFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = ColumnAppenderProcessor()
         self.create_tool_specific_widgets()
         
     def get_tool_name(self):
         return "Column Appender"
+        
+    def get_column_options(self):
+        """Gets current column options from UI"""
+        return {
+            'column_name': self.name_var.get(),
+            'default_value': self.value_var.get() or '',
+            'position': self.position_var.get()
+        }
         
     def create_tool_specific_widgets(self):
         # Column details frame
@@ -122,17 +132,20 @@ class ColumnAppenderFrame(BaseToolFrame):
                 self.update_progress(0, "Generating preview...")
                 df = pd.read_csv(self.input_file, nrows=5)
                 
-                # Create preview dataframe
-                preview_df = df.copy()
-                column_name = self.name_var.get()
-                default_value = self.value_var.get() or ''
+                # Validate column name
+                is_valid, error = self.processor.validate_column_name(
+                    df,
+                    self.name_var.get()
+                )
                 
-                if self.position_var.get() == "start":
-                    # Insert at start
-                    preview_df.insert(0, column_name, default_value)
-                else:
-                    # Add at end
-                    preview_df[column_name] = default_value
+                if not is_valid:
+                    self.show_error(error)
+                    self.process_btn.config(state=tk.DISABLED)
+                    return
+                
+                # Generate preview
+                options = self.get_column_options()
+                preview_df = self.processor.preview_data(df, **options)
                 
                 # Update preview text
                 self.preview_text.config(state=tk.NORMAL)
@@ -141,8 +154,8 @@ class ColumnAppenderFrame(BaseToolFrame):
                 self.preview_text.insert(tk.END, preview_df.to_string())
                 self.preview_text.config(state=tk.DISABLED)
                 
-                # Enable process button if we have a column name
-                self.process_btn.config(state=tk.NORMAL if column_name else tk.DISABLED)
+                # Enable process button
+                self.process_btn.config(state=tk.NORMAL)
                 
             except Exception as e:
                 self.show_error(f"Failed to generate preview: {str(e)}")
@@ -163,22 +176,21 @@ class ColumnAppenderFrame(BaseToolFrame):
             self.update_progress(0, "Reading file...")
             df = pd.read_csv(self.input_file)
             
-            if column_name in df.columns:
-                if not messagebox.askyesno(
-                    "Warning",
-                    f"Column '{column_name}' already exists. Overwrite?"
-                ):
+            # Validate column name
+            is_valid, error = self.processor.validate_column_name(df, column_name)
+            if not is_valid:
+                if "already exists" in error:
+                    if not messagebox.askyesno("Warning", f"Column '{column_name}' already exists. Overwrite?"):
+                        return
+                else:
+                    messagebox.showwarning("Warning", error)
                     return
             
             self.update_progress(33, "Adding column...")
             
-            default_value = self.value_var.get() or ''
-            if self.position_var.get() == "start":
-                # Insert at start
-                df.insert(0, column_name, default_value)
-            else:
-                # Add at end
-                df[column_name] = default_value
+            # Add the new column
+            options = self.get_column_options()
+            df_modified = self.processor.add_column(df, **options)
             
             self.update_progress(66, "Saving results...")
             
@@ -189,7 +201,7 @@ class ColumnAppenderFrame(BaseToolFrame):
             )
             
             # Save the modified data
-            df.to_csv(output_file, index=False)
+            df_modified.to_csv(output_file, index=False)
             
             self.update_progress(100, 
                 f"Complete! Added column '{column_name}'. "
