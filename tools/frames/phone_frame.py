@@ -63,7 +63,7 @@ class PhoneFrame(BaseToolFrame):
         if self.input_file:
             try:
                 columns = self.processor.get_columns(self.input_file)
-                self.column_selector.set_options(columns)
+                self.column_selector.set_items(columns)
             except Exception as e:
                 self.show_error(str(e))
     
