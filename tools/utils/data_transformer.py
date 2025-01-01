@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 class DataTransformer:
     """Handles common DataFrame transformations"""
@@ -29,3 +30,43 @@ class DataTransformer:
             filtered_data = df.iloc[1:][condition]
             return pd.concat([header, filtered_data])
         return df[condition] 
+    
+    @staticmethod
+    def create_sample(df, sample_size, random=False, keep_header=True):
+        """Creates a sample from DataFrame"""
+        if keep_header:
+            header = df.iloc[:1]
+            if random:
+                sample = df.iloc[1:].sample(n=sample_size)
+            else:
+                sample = df.iloc[1:sample_size + 1]
+            return pd.concat([header, sample])
+        else:
+            if random:
+                return df.sample(n=sample_size)
+            else:
+                return df.iloc[:sample_size]
+    
+    @staticmethod
+    def stratified_sample(df, column, size_per_group, random=True, keep_header=True):
+        """Creates stratified sample based on column values"""
+        if keep_header:
+            header = df.iloc[:1]
+            data = df.iloc[1:]
+        else:
+            data = df
+            
+        samples = []
+        if keep_header:
+            samples.append(header)
+            
+        for value in data[column].unique():
+            group = data[data[column] == value]
+            size = min(size_per_group, len(group))
+            if random:
+                sample = group.sample(n=size)
+            else:
+                sample = group.iloc[:size]
+            samples.append(sample)
+            
+        return pd.concat(samples) 
