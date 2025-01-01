@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 from tools.utils.tool_manager import ToolManager
-from tools.frames import (
-    InspectorFrame, SweeperFrame, PhoneFrame, 
-    SampleFrame, ReverserFrame, AppenderFrame
-)
+# Import individual frames if needed
+from tools.frames.inspector_frame import InspectorFrame
+from tools.frames.sweeper_frame import SweeperFrame
+from tools.frames.phone_frame import PhoneFrame
+from tools.frames.sample_frame import SampleFrame
+from tools.frames.reverser_frame import ReverserFrame
+from tools.frames.appender_frame import AppenderFrame
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
