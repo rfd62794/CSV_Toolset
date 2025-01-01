@@ -1,8 +1,23 @@
+from typing import Optional, Callable
+from dataclasses import dataclass
+
+@dataclass
 class ProgressTracker:
-    def __init__(self, callback=None):
-        self.callback = callback
-        
-    def update(self, progress, message=None):
-        """Updates progress with optional message"""
+    """Handles progress tracking and updates"""
+    
+    callback: Optional[Callable[[int, str], None]] = None
+    current: int = 0
+    message: str = ""
+    
+    def update(self, percent: int, message: str = None) -> None:
+        """Updates progress"""
+        self.current = max(0, min(100, percent))
+        if message:
+            self.message = message
+            
         if self.callback:
-            self.callback(progress, message) 
+            self.callback(self.current, self.message)
+    
+    def step(self, amount: int = 10, message: str = None) -> None:
+        """Increments progress by step amount"""
+        self.update(self.current + amount, message) 

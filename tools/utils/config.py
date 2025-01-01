@@ -1,25 +1,43 @@
+from typing import Dict, Any
+from pathlib import Path
+
 class ToolConfig:
-    """Common configuration settings"""
+    """Central configuration for the application"""
     
-    # File settings
-    DEFAULT_ENCODING = 'utf-8'
-    CSV_EXTENSIONS = ['.csv']
-    
-    # Preview settings
-    DEFAULT_PREVIEW_ROWS = 5
-    
-    # Progress settings
+    # Progress step percentages
     PROGRESS_STEPS = {
         'READ': 0,
-        'PROCESS': 33,
-        'SAVE': 66,
+        'VALIDATE': 20,
+        'PROCESS': 40,
+        'SAVE': 80,
         'COMPLETE': 100
     }
     
-    # Error messages
-    ERRORS = {
-        'NO_FILE': "No file selected",
-        'INVALID_FILE': "Selected file is not a CSV file",
-        'FILE_NOT_FOUND': "File not found: {}",
-        'SAVE_FAILED': "Failed to save file: {}"
-    } 
+    # File settings
+    FILE_SETTINGS = {
+        'encoding': 'utf-8',
+        'chunk_size': 10000,
+        'max_file_size': 1024 * 1024 * 100  # 100MB
+    }
+    
+    # UI settings
+    UI_SETTINGS = {
+        'default_window_size': '800x600',
+        'min_window_size': '600x400',
+        'button_width': 15,
+        'entry_width': 50
+    }
+    
+    # Tool categories
+    TOOL_CATEGORIES = {
+        'Analysis': ['CSV Inspector'],
+        'Data Cleaning': ['Column Sweeper', 'Phone Extractor'],
+        'Data Manipulation': ['Sample Maker', 'Order Reverser', 'Column Appender']
+    }
+    
+    @staticmethod
+    def get_output_dir() -> Path:
+        """Gets output directory path"""
+        output_dir = Path.home() / 'CSVToolkit' / 'output'
+        output_dir.mkdir(parents=True, exist_ok=True)
+        return output_dir 
