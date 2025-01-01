@@ -92,3 +92,9 @@ class BaseProcessor(ABC):
             
         except Exception as e:
             return False, str(e) 
+    
+    def get_reader(self) -> DataReader:
+        """Gets a DataReader instance"""
+        if not hasattr(self, '_reader'):
+            self._reader = DataReader()
+        return self._reader 

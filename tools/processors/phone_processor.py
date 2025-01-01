@@ -1,87 +1,94 @@
-import re
 import pandas as pd
-from .base_processor import BaseProcessor
-from ..utils.pattern_processor import PatternProcessor
+import re
+from typing import List, Tuple, Dict, Any, Optional, Callable
+from ..base.base_processor import BaseProcessor
 
 class PhoneProcessor(BaseProcessor):
-    # Common phone patterns
-    PATTERNS = {
-        'us': r'\b(?:\+?1[-.]?)?\s*\(?([0-9]{3})\)?[-.\s]*([0-9]{3})[-.\s]*([0-9]{4})\b',
-        'international': r'\+?[0-9]{1,4}[-.\s]*\(?[0-9]{1,4}\)?[-.\s0-9]{6,}'
-    }
+    """Processor for extracting phone numbers from CSV columns"""
+    
+    # Phone number pattern
+    PHONE_PATTERN = r'\b(?:\+?1[-.]?)?\s*(?:\([0-9]{3}\)|[0-9]{3})[-.]?\s*[0-9]{3}[-.]?\s*[0-9]{4}\b'
     
     def __init__(self):
         super().__init__()
-        self.pattern_processor = PatternProcessor()
-        
-    def _compile_pattern(self, pattern_type='us'):
-        """Gets the appropriate regex pattern"""
-        pattern = self.PATTERNS.get(pattern_type, self.PATTERNS['us'])
-        return self.pattern_processor.compile_pattern(pattern, re.IGNORECASE)
+        self.reader = self.get_reader()
     
-    def _format_number(self, match, format_type='(XXX) XXX-XXXX'):
-        """Formats a phone number match"""
-        if not match or len(match.groups()) != 3:
-            return match.group(0) if match else ''
+    def get_columns(self, file_path: str) -> List[str]:
+        """Gets column names from CSV file"""
+        return self.reader.get_columns(file_path)
+    
+    def format_phone(self, match: re.Match) -> str:
+        """Formats phone number to standard format"""
+        # Extract just the digits
+        digits = ''.join(re.findall(r'\d+', match.group(0)))
+        
+        # Remove leading 1 if present
+        if len(digits) == 11 and digits.startswith('1'):
+            digits = digits[1:]
             
-        area, prefix, number = match.groups()
-        formatted = format_type
-        formatted = formatted.replace('XXX', area, 1)
-        formatted = formatted.replace('XXX', prefix, 1)
-        formatted = formatted.replace('XXXX', number)
-        return formatted
+        # Format as (XXX) XXX-XXXX
+        return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
     
-    def _process_data(self, df, source_column, pattern_type='us', format_type='(XXX) XXX-XXXX'):
+    def extract_phones(self, text: str, format_numbers: bool = True) -> List[str]:
+        """Extracts phone numbers from text"""
+        if pd.isna(text):
+            return []
+            
+        matches = list(re.finditer(self.PHONE_PATTERN, str(text)))
+        if not matches:
+            return []
+            
+        if format_numbers:
+            return [self.format_phone(m) for m in matches]
+        return [m.group(0) for m in matches]
+    
+    def _process_data(self, df: pd.DataFrame, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
-        Extracts phone numbers from text.
-        Implements abstract method from BaseProcessor.
-        """
-        # Validate source column exists
-        valid, error = self.validator.validate_columns_exist(df, [source_column])
-        if not valid:
-            raise ValueError(error)
+        Processes DataFrame to extract phone numbers
         
-        # Compile regex pattern
-        pattern = self._compile_pattern(pattern_type)
-        
-        # Extract and format phone numbers
-        phone_numbers = []
-        for text in df[source_column]:
-            if pd.isna(text):
-                phone_numbers.append('')
-                continue
+        Args:
+            df: Input DataFrame
+            **options:
+                columns: List of columns to search
+                keep_original: Whether to keep original columns
+                format_numbers: Whether to format found numbers
                 
-            matches = list(pattern.finditer(str(text)))
-            if matches:
-                formatted = self._format_number(matches[0], format_type)
-                phone_numbers.append(formatted)
-            else:
-                phone_numbers.append('')
+        Returns:
+            tuple: (processed_df, stats_dict)
+        """
+        columns = options.get('columns', [])
+        keep_original = options.get('keep_original', True)
+        format_numbers = options.get('format_numbers', True)
         
-        # Create result DataFrame
-        result = df.copy()
-        result['extracted_phone'] = phone_numbers
+        result_df = df.copy() if keep_original else pd.DataFrame(index=df.index)
+        phones_found = 0
         
-        return result
-    
-    def process_file(self, input_file, source_column, pattern_type='us', format_type='(XXX) XXX-XXXX', progress_callback=None):
-        """Extracts phone numbers from CSV file"""
-        self.set_progress_callback(progress_callback)
+        # Process each column
+        total_cols = len(columns)
+        for i, col in enumerate(columns):
+            # Extract phone numbers
+            new_col = f"{col}_phones"
+            phones = df[col].apply(
+                lambda x: self.extract_phones(x, format_numbers)
+            )
+            
+            # Count total phones found
+            phones_found += sum(len(p) for p in phones)
+            
+            # Add extracted numbers to result
+            result_df[new_col] = phones.apply(
+                lambda x: '; '.join(x) if x else ''
+            )
+            
+            # Update progress
+            if self.progress:
+                progress = int((i + 1) / total_cols * 80)  # Leave 20% for saving
+                self.update_progress(
+                    progress,
+                    f"Processing column {i+1} of {total_cols}..."
+                )
         
-        try:
-            # Read and process data
-            df = self.reader.read_csv(input_file)
-            result = self._process_data(df, source_column, pattern_type, format_type)
-            
-            # Calculate statistics
-            total_found = sum(result['extracted_phone'].astype(bool))
-            stats = {
-                'total_rows': len(result),
-                'numbers_found': total_found,
-                'success_rate': f"{(total_found / len(result) * 100):.1f}%"
-            }
-            
-            return result, stats
-            
-        except Exception as e:
-            return False, str(e) 
+        return result_df, {
+            'phones_found': phones_found,
+            'columns_processed': len(columns)
+        } 
