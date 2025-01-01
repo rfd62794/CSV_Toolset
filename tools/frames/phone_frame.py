@@ -80,17 +80,13 @@ class PhoneFrame(BaseToolFrame):
             
         try:
             # Process file
-            result, stats = self.processor.process_file(
+            result_df, stats = self.processor.process_file(
                 self.input_file,
                 columns=selected_columns,
                 keep_original=self.options.get_option('keep_original'),
                 format_numbers=self.options.get_option('format_numbers'),
                 progress_callback=self.update_progress
             )
-            
-            if not isinstance(result, pd.DataFrame):
-                self.show_error(stats)  # stats contains error message
-                return
             
             # Generate output filename
             output_file = self.file_manager.generate_output_path(
@@ -99,14 +95,17 @@ class PhoneFrame(BaseToolFrame):
             )
             
             # Save results
-            success, error = self.writer.write_csv(result, output_file)
+            success, error = self.writer.write_csv(result_df, output_file)
             if not success:
                 raise Exception(error)
             
-            self.update_progress(100,
-                f"Complete! Found {stats['phones_found']:,} phone numbers. "
+            # Show success message
+            message = (
+                f"Complete! Found {stats['phones_found']:,} phone numbers in "
+                f"{stats['columns_processed']} column(s).\n"
                 f"Saved to: {output_file}"
             )
+            self.update_progress(100, message)
             
         except Exception as e:
             self.show_error(str(e)) 
