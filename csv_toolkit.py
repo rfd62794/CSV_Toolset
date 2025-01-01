@@ -82,6 +82,12 @@ class CSVToolkit(tk.Tk):
         sweeper = ColumnSweeperFrame(self.content)
         sweeper.pack(fill=tk.BOTH, expand=True)
     
+    def show_order_reverser(self):
+        self.clear_content()
+        from tools.order_reverser_frame import OrderReverserFrame
+        reverser = OrderReverserFrame(self.content)
+        reverser.pack(fill=tk.BOTH, expand=True)
+    
     # ... Additional tool methods ...
 
 if __name__ == "__main__":
