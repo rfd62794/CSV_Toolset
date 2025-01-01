@@ -1,50 +1,90 @@
 import pandas as pd
 import numpy as np
-from .base_processor import BaseProcessor
-from ..utils.data_transformer import DataTransformer
+from typing import List, Tuple, Dict, Any, Optional
+from ..base.base_processor import BaseProcessor
 
 class SampleProcessor(BaseProcessor):
+    """Processor for creating data samples"""
+    
     def __init__(self):
         super().__init__()
-        self.transformer = DataTransformer()
+        self.reader = self.get_reader()
     
-    def _process_data(self, df, sample_size, random=False, keep_header=True):
-        """
-        Creates a sample from DataFrame.
-        Implements abstract method from BaseProcessor.
-        """
-        # Validate sample size
-        valid, error = self.validator.validate_sample_size(len(df), sample_size)
-        if not valid:
-            raise ValueError(error)
-            
-        return self.transformer.create_sample(
-            df, 
-            int(sample_size), 
-            random, 
-            keep_header
-        )
+    def get_columns(self, file_path: str) -> List[str]:
+        """Gets column names from CSV file"""
+        return self.reader.get_columns(file_path)
     
-    def process_file(self, input_file, sample_size, random=False, keep_header=True, progress_callback=None):
-        """Creates a sample from CSV file"""
-        self.set_progress_callback(progress_callback)
+    def _process_data(self, df: pd.DataFrame, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Creates sample from DataFrame
         
+        Args:
+            df: Input DataFrame
+            **options:
+                sample_size: Number of rows to sample
+                method: Sampling method ('sequential', 'random', 'stratified')
+                strat_column: Column to use for stratification
+                keep_header: Whether to keep header row
+        """
+        sample_size = int(options.get('sample_size', 100))
+        method = options.get('method', 'sequential')
+        strat_column = options.get('strat_column')
+        keep_header = options.get('keep_header', True)
+        
+        total_rows = len(df)
+        if sample_size > total_rows:
+            sample_size = total_rows
+        
+        # Get sample based on method
+        if method == 'random':
+            sample = df.sample(n=sample_size)
+            
+        elif method == 'stratified' and strat_column:
+            # Calculate proportions for each group
+            props = df[strat_column].value_counts(normalize=True)
+            
+            # Get stratified sample
+            samples = []
+            for group in props.index:
+                group_size = int(np.ceil(props[group] * sample_size))
+                group_df = df[df[strat_column] == group]
+                if len(group_df) > group_size:
+                    samples.append(group_df.sample(n=group_size))
+                else:
+                    samples.append(group_df)
+            
+            sample = pd.concat(samples)
+            
+            # Trim to exact sample size if needed
+            if len(sample) > sample_size:
+                sample = sample.sample(n=sample_size)
+                
+        else:  # sequential
+            sample = df.head(sample_size)
+        
+        # Sort by index if random sampling was used
+        if method in ['random', 'stratified']:
+            sample = sample.sort_index()
+        
+        # Add header row if requested
+        if keep_header and method != 'sequential':
+            header_row = df.head(1)
+            sample = pd.concat([header_row, sample])
+        
+        return sample, {
+            'total_rows': total_rows,
+            'sampled_rows': len(sample),
+            'method': method
+        }
+    
+    def validate_sample_size(self, total_rows: int, sample_size: Any) -> Tuple[bool, str]:
+        """Validates sample size input"""
         try:
-            # Read data
-            self.update_progress(0, "Reading file...")
-            df = self.reader.read_csv(input_file)
-            
-            # Process sample
-            self.update_progress(50, "Creating sample...")
-            result = self._process_data(df, sample_size, random, keep_header)
-            
-            stats = {
-                'total_rows': len(df),
-                'sample_size': len(result),
-                'sampling_method': 'random' if random else 'sequential'
-            }
-            
-            return result, stats
-            
-        except Exception as e:
-            return False, str(e) 
+            size = int(sample_size)
+            if size < 1:
+                return False, "Sample size must be at least 1"
+            if size > total_rows:
+                return False, f"Sample size ({size:,}) is larger than total rows ({total_rows:,})"
+            return True, ""
+        except (ValueError, TypeError):
+            return False, "Sample size must be a valid number" 
