@@ -1,29 +1,17 @@
-import pandas as pd
+from .base_processor import BaseProcessor
 
-class SweeperProcessor:
-    @classmethod
-    def get_columns(cls, file_path):
-        """
-        Gets list of columns from CSV file.
-        
-        Returns:
-            list: Column names
-        """
-        df = pd.read_csv(file_path, nrows=0)  # Read only header
-        return list(df.columns)
+class SweeperProcessor(BaseProcessor):
+    def __init__(self):
+        super().__init__()
     
-    @classmethod
-    def remove_empty_rows(cls, df, columns, treat_empty_as_null=True):
+    def get_columns(self, file_path):
+        """Gets list of columns from CSV file"""
+        return self.reader.get_columns(file_path)
+    
+    def _process_data(self, df, columns, treat_empty_as_null=True):
         """
         Removes rows with missing data in specified columns.
-        
-        Args:
-            df: Input DataFrame
-            columns: List of columns to check
-            treat_empty_as_null: If True, treat empty strings as missing values
-            
-        Returns:
-            DataFrame with rows removed
+        Implements abstract method from BaseProcessor.
         """
         df_clean = df.copy()
         
@@ -37,34 +25,19 @@ class SweeperProcessor:
         
         return df_clean
     
-    @classmethod
-    def process_file(cls, file_path, columns, treat_empty_as_null=True, progress_callback=None):
-        """
-        Processes the file and removes rows with missing data.
+    def process_file(self, input_file, columns, treat_empty_as_null=True, progress_callback=None):
+        """Processes the file and removes rows with missing data"""
+        self.set_progress_callback(progress_callback)
         
-        Args:
-            file_path: Path to CSV file
-            columns: List of columns to check
-            treat_empty_as_null: If True, treat empty strings as missing values
-            progress_callback: Optional callback for progress updates
+        # Validate columns exist before processing
+        df = self.reader.read_csv(input_file)
+        valid, error = self.validator.validate_columns_exist(df, columns)
+        if not valid:
+            return False, error
             
-        Returns:
-            tuple: (processed_df, stats_dict)
-        """
-        if progress_callback:
-            progress_callback(0, "Reading file...")
-            
-        df = pd.read_csv(file_path)
         initial_rows = len(df)
+        df_clean = self._process_data(df, columns, treat_empty_as_null)
         
-        if progress_callback:
-            progress_callback(33, "Removing empty rows...")
-            
-        df_clean = cls.remove_empty_rows(df, columns, treat_empty_as_null)
-        
-        if progress_callback:
-            progress_callback(66, "Calculating statistics...")
-            
         stats = {
             'initial_rows': initial_rows,
             'final_rows': len(df_clean),
