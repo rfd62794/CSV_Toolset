@@ -1,16 +1,24 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import pandas as pd
-import re
 from .base_tool import BaseToolFrame
+from .processors.phone_processor import PhoneProcessor
 
 class PhoneExtractorFrame(BaseToolFrame):
     def __init__(self, master):
         super().__init__(master)
+        self.processor = PhoneProcessor()
         self.create_tool_specific_widgets()
         
     def get_tool_name(self):
         return "Phone Extractor"
+        
+    def get_format_options(self):
+        """Gets current formatting options from UI"""
+        return {
+            'format_style': self.format_var.get(),
+            'strict': self.strict_var.get()
+        }
         
     def create_tool_specific_widgets(self):
         # Column selection frame
@@ -106,48 +114,29 @@ class PhoneExtractorFrame(BaseToolFrame):
                 df = pd.read_csv(self.input_file, nrows=5)
                 column = self.column_var.get()
                 
+                options = self.get_format_options()
+                preview_data = self.processor.preview_data(
+                    df,
+                    column,
+                    **options
+                )
+                
                 # Update preview text
                 self.preview_text.config(state=tk.NORMAL)
                 self.preview_text.delete('1.0', tk.END)
                 
                 preview = ["Sample data from selected column:"]
-                for value in df[column].head():
-                    preview.append(f"Original: {value}")
-                    formatted = self.format_phone_number(str(value))
-                    if formatted:
-                        preview.append(f"Formatted: {formatted}\n")
-                    else:
-                        preview.append("No valid phone number found\n")
+                for item in preview_data:
+                    preview.extend([
+                        f"Original: {item['Original']}",
+                        f"Formatted: {item['Formatted']}\n"
+                    ])
                 
                 self.preview_text.insert('1.0', '\n'.join(preview))
                 self.preview_text.config(state=tk.DISABLED)
                 
             except Exception as e:
                 self.show_error(f"Failed to generate preview: {str(e)}")
-                
-    def format_phone_number(self, value):
-        """Formats a phone number according to selected format"""
-        # Remove all non-numeric characters
-        numbers = re.sub(r'\D', '', str(value))
-        
-        # In strict mode, only accept 10-digit numbers
-        if self.strict_var.get() and len(numbers) != 10:
-            return None
-            
-        # If not strict, try to extract last 10 digits
-        if len(numbers) > 10:
-            numbers = numbers[-10:]
-        elif len(numbers) < 10:
-            return None
-            
-        # Format according to selected style
-        format_style = self.format_var.get()
-        if format_style == "plain":
-            return numbers
-        elif format_style == "standard":
-            return f"{numbers[:3]}-{numbers[3:6]}-{numbers[6:]}"
-        else:  # parentheses
-            return f"({numbers[:3]}) {numbers[3:6]}-{numbers[6:]}"
         
     def process_file(self):
         """Extracts and formats phone numbers from the selected column"""
@@ -162,30 +151,13 @@ class PhoneExtractorFrame(BaseToolFrame):
             
             self.update_progress(33, "Extracting phone numbers...")
             
-            # Create new dataframe with just the phone numbers
-            phone_numbers = []
-            total_rows = len(df)
-            
-            for idx, value in enumerate(df[column]):
-                formatted = self.format_phone_number(value)
-                phone_numbers.append(formatted if formatted else '')
-                
-                if idx % 1000 == 0:  # Update progress periodically
-                    self.update_progress(
-                        33 + (idx / total_rows * 33),
-                        f"Processing row {idx:,} of {total_rows:,}"
-                    )
+            options = self.get_format_options()
+            output_df = self.processor.process_column(df, column, **options)
             
             self.update_progress(66, "Saving results...")
             
-            # Create output dataframe
-            output_df = pd.DataFrame({
-                'Original': df[column],
-                'Formatted_Phone': phone_numbers
-            })
-            
             # Generate output filename
-            format_type = self.format_var.get()
+            format_type = options['format_style']
             output_file = self.file_manager.generate_output_path(
                 self.input_file,
                 f"phones_{format_type}"
@@ -195,7 +167,7 @@ class PhoneExtractorFrame(BaseToolFrame):
             output_df.to_csv(output_file, index=False)
             
             # Count valid numbers
-            valid_numbers = sum(1 for num in phone_numbers if num)
+            valid_numbers = output_df['Formatted_Phone'].notna().sum()
             
             self.update_progress(100, 
                 f"Complete! Extracted {valid_numbers:,} phone numbers. "
