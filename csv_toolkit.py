@@ -78,7 +78,9 @@ class CSVToolkit(tk.Tk):
     
     def show_column_sweeper(self):
         self.clear_content()
-        # Import and show column sweeper interface
+        from tools.column_sweeper_frame import ColumnSweeperFrame
+        sweeper = ColumnSweeperFrame(self.content)
+        sweeper.pack(fill=tk.BOTH, expand=True)
     
     # ... Additional tool methods ...
 
