@@ -62,6 +62,24 @@ class TransformerFrame(BaseToolFrame):
         self.preview_tree.heading('Original', text='Original Value')
         self.preview_tree.heading('Transformed', text='Transformed Value')
         self.preview_tree.pack(fill=tk.BOTH, expand=True) 
+        
+        # Add process button
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.preview_btn = ttk.Button(
+            self.button_frame,
+            text="Preview",
+            command=self.update_preview
+        )
+        self.preview_btn.pack(side=tk.LEFT, padx=5)
+        
+        self.process_btn = ttk.Button(
+            self.button_frame,
+            text="Transform File",
+            command=self.process_file
+        )
+        self.process_btn.pack(side=tk.LEFT, padx=5)
 
     def _on_column_changed(self, value: str):
         """Handles column selection change"""
@@ -109,3 +127,23 @@ class TransformerFrame(BaseToolFrame):
             
         except Exception as e:
             self.show_error(f"Preview error: {str(e)}") 
+
+    def process_file(self):
+        """Processes the input file"""
+        if not hasattr(self, 'processor'):
+            self.processor = TransformerProcessor()
+            
+        try:
+            config = self.config_panel.get_config()
+            result = self.processor.process_file(self.input_file, config)
+            
+            if result['success']:
+                self.show_success(
+                    f"Transformed {result['rows_processed']} rows. "
+                    f"Saved to: {result['output_file']}"
+                )
+            else:
+                self.show_error(result['error'])
+                
+        except Exception as e:
+            self.show_error(f"Error processing file: {str(e)}") 
