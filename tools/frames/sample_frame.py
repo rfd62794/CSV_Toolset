@@ -39,6 +39,7 @@ class SampleFrame(BaseToolFrame):
             'sample_size',
             'Sample Size',
             min_val=1,
+            default=100,
             callback=self._on_sample_size_changed
         )
         

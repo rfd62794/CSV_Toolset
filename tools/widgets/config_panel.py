@@ -11,14 +11,16 @@ class ConfigPanel(ttk.LabelFrame):
         self.variables = {}
         self.frames = {}
     
-    def add_choice_option(self, name: str, label: str, choices: list, callback=None):
+    def add_choice_option(self, name: str, label: str, choices: list, 
+                         default: str = None, callback=None, visible: bool = True):
         """Adds a dropdown selection option"""
         frame = ttk.Frame(self)
-        frame.pack(fill=tk.X, padx=5, pady=2)
+        if visible:
+            frame.pack(fill=tk.X, padx=5, pady=2)
         
         ttk.Label(frame, text=label).pack(side=tk.LEFT)
         
-        var = tk.StringVar(value=choices[0] if choices else '')
+        var = tk.StringVar(value=default if default else (choices[0] if choices else ''))
         if callback:
             var.trace_add('write', lambda *args: callback(var.get()))
         
