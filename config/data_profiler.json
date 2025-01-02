@@ -2,5 +2,5 @@
     "show_stats": true,
     "show_distribution": true,
     "show_correlations": true,
-    "sample_size": 10000
+    "sample_size": 1000
 }
