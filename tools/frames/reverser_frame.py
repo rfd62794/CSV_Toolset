@@ -17,17 +17,36 @@ class ReverserFrame(BaseToolFrame):
         return "Order Reverser"
     
     def create_tool_specific_widgets(self):
-        # Options frame
+        # Add tooltips for better UX
+        self.tooltip = ToolTip(self)
+        
+        # Add preview option
         self.options_frame = ttk.LabelFrame(self, text="Options")
         self.options_frame.pack(fill=tk.X, padx=10, pady=5)
         
-        # Add header option
+        # Add header option with tooltip
         self.header_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(
+        header_btn = ttk.Checkbutton(
             self.options_frame,
             text="Keep header row at top",
             variable=self.header_var
-        ).pack(padx=5, pady=5)
+        )
+        header_btn.pack(padx=5, pady=5)
+        self.tooltip.bind_widget(
+            header_btn,
+            "Keep the first row (header) in place while reversing all other rows"
+        )
+        
+        # Add preview frame
+        self.preview_frame = ttk.LabelFrame(self, text="Preview")
+        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        self.preview_text = ScrolledText(
+            self.preview_frame,
+            wrap=tk.WORD,
+            height=10
+        )
+        self.preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Add process button
         self.process_btn = ttk.Button(
@@ -69,3 +88,23 @@ class ReverserFrame(BaseToolFrame):
             
         except Exception as e:
             self.show_error(str(e)) 
+    
+    def update_preview(self, *args):
+        """Updates preview when file is selected"""
+        if self.input_file:
+            try:
+                # Show first few rows of original and reversed data
+                preview_df = self.processor.reader.preview_data(self.input_file)
+                reversed_df, _ = self.processor.process_data(
+                    preview_df,
+                    keep_header=self.header_var.get()
+                )
+                
+                self.preview_text.delete('1.0', tk.END)
+                self.preview_text.insert(tk.END, "Original data:\n")
+                self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
+                self.preview_text.insert(tk.END, "Reversed data:\n")
+                self.preview_text.insert(tk.END, str(reversed_df))
+                
+            except Exception as e:
+                self.show_error(f"Preview error: {str(e)}") 

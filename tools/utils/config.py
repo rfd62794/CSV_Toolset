@@ -35,6 +35,13 @@ class ToolConfig:
         'Data Manipulation': ['Sample Maker', 'Order Reverser', 'Column Appender']
     }
     
+    # Add reverser-specific settings
+    REVERSER_SETTINGS = {
+        'preview_rows': 5,
+        'chunk_size': 10000,  # For large file processing
+        'max_file_size': 1024 * 1024 * 100  # 100MB limit
+    }
+    
     @staticmethod
     def get_output_dir() -> Path:
         """Gets output directory path"""
