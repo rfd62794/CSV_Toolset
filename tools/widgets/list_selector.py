@@ -20,12 +20,19 @@ class ListSelector(ttk.LabelFrame):
         self.search_var = tk.StringVar()
         self.search_var.trace_add('write', self._filter_items)
         
-        ttk.Entry(
+        search_entry = ttk.Entry(
             self.search_frame,
-            textvariable=self.search_var,
-            placeholder="Search items..."  # Requires themed tk
-        ).pack(side=tk.LEFT, fill=tk.X, expand=True)
+            textvariable=self.search_var
+        )
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
+        # Add placeholder behavior
+        search_entry.insert(0, "Search items...")
+        search_entry.bind('<FocusIn>', lambda e: self._on_search_focus_in(e, search_entry))
+        search_entry.bind('<FocusOut>', lambda e: self._on_search_focus_out(e, search_entry))
+        self.search_entry = search_entry
+        
+        # Add clear button
         ttk.Button(
             self.search_frame,
             text="×",
@@ -142,6 +149,9 @@ class ListSelector(ttk.LabelFrame):
     def _clear_search(self):
         """Clears the search filter"""
         self.search_var.set("")
+        self.search_entry.configure(foreground='gray')
+        self.search_entry.insert(0, "Search items...")
+        self.search_entry.selection_clear()
     
     def _on_click(self, event):
         """Handles start of drag operation"""
@@ -225,3 +235,15 @@ class ListSelector(ttk.LabelFrame):
         for i in range(self.listbox.size()):
             if self.listbox.get(i) in items:
                 self.listbox.selection_set(i) 
+    
+    def _on_search_focus_in(self, event, entry):
+        """Handles search entry focus in"""
+        if entry.get() == "Search items...":
+            entry.delete(0, tk.END)
+            entry.configure(foreground='black')
+    
+    def _on_search_focus_out(self, event, entry):
+        """Handles search entry focus out"""
+        if not entry.get():
+            entry.insert(0, "Search items...")
+            entry.configure(foreground='gray') 
