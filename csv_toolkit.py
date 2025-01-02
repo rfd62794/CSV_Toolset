@@ -67,42 +67,20 @@ class CSVToolkit(tk.Tk):
         self.main_container.pack(fill=tk.BOTH, expand=True)
         
         # Create tool selection frame
-        self.tool_frame = ttk.LabelFrame(self.main_container, text="Tools")
+        self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
         self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         
-        # Create notebook for categorized tools
-        self.tool_notebook = ttk.Notebook(self.tool_frame)
-        self.tool_notebook.pack(fill=tk.BOTH, expand=True)
-        
-        # Add tool categories
-        self.category_frames = {}
-        categories = self.tool_manager.get_categories()
-        
-        for category, tools in categories.items():
-            # Create frame for category
-            frame = ttk.Frame(self.tool_notebook)
-            self.tool_notebook.add(frame, text=category)
-            
-            # Add description label
-            desc = self.tool_manager.get_category_description(category)
-            if desc:
-                ttk.Label(
-                    frame,
-                    text=desc,
-                    wraplength=200,
-                    justify=tk.LEFT
-                ).pack(padx=5, pady=2, fill=tk.X)
-            
-            # Add tool buttons
-            for tool_name in tools:
+        # Add tool buttons
+        tools = []
+        for category, tool_list in self.tool_manager.get_categories().items():
+            for tool_name in tool_list:
+                tools.append(tool_name)
                 btn = ttk.Button(
-                    frame,
+                    self.tool_frame,
                     text=tool_name,
                     command=lambda t=tool_name: self.show_tool(t)
                 )
                 btn.pack(padx=5, pady=2, fill=tk.X)
-            
-            self.category_frames[category] = frame
         
         # Create tool display area
         self.tool_display = ttk.Frame(self.main_container)
