@@ -13,7 +13,27 @@ class ListSelector(ttk.LabelFrame):
         self.all_items = []  # Store all items for filtering
         self.groups = {}  # Store group information
         
-        # Add search frame
+        # Create listbox with scrollbar first
+        self.list_frame = ttk.Frame(self)
+        self.list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.listbox = tk.Listbox(
+            self.list_frame,
+            selectmode='multiple' if multiple else 'single',
+            exportselection=False
+        )
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        scrollbar = ttk.Scrollbar(
+            self.list_frame,
+            orient="vertical",
+            command=self.listbox.yview
+        )
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.listbox.configure(yscrollcommand=scrollbar.set)
+        
+        # Now add search frame
         self.search_frame = ttk.Frame(self)
         self.search_frame.pack(fill=tk.X, padx=5, pady=2)
         
@@ -40,30 +60,10 @@ class ListSelector(ttk.LabelFrame):
             command=self._clear_search
         ).pack(side=tk.RIGHT, padx=(2, 0))
         
-        # Create listbox with scrollbar
-        self.list_frame = ttk.Frame(self)
-        self.list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        self.listbox = tk.Listbox(
-            self.list_frame,
-            selectmode='multiple' if multiple else 'single',
-            exportselection=False
-        )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
         # Enable drag and drop
         self.listbox.bind('<Button-1>', self._on_click)
         self.listbox.bind('<B1-Motion>', self._on_drag)
         self.listbox.bind('<ButtonRelease-1>', self._on_drop)
-        
-        scrollbar = ttk.Scrollbar(
-            self.list_frame,
-            orient="vertical",
-            command=self.listbox.yview
-        )
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        self.listbox.configure(yscrollcommand=scrollbar.set)
         
         # Control buttons frame
         self.button_frame = ttk.Frame(self)
