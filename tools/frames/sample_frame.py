@@ -149,6 +149,9 @@ class SampleFrame(BaseToolFrame):
     def process_file(self):
         """Processes the input file"""
         try:
+            if not hasattr(self, 'processor'):
+                self.processor = SampleProcessor()
+            
             df = self.read_input_file()
             if df is None:
                 return
