@@ -101,6 +101,59 @@ class ColumnManagerFrame(BaseToolFrame):
             text="Add Column",
             command=self.add_column
         ).pack(fill=tk.X, padx=5, pady=2)
+        
+        # Split operation
+        split_frame = ttk.LabelFrame(ops_frame, text="Split Column")
+        split_frame.pack(fill=tk.X, pady=5)
+        
+        self.split_separator = tk.StringVar()
+        ttk.Entry(
+            split_frame,
+            textvariable=self.split_separator,
+            placeholder="Separator (optional)"
+        ).pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Button(
+            split_frame,
+            text="Split Column",
+            command=self.split_column
+        ).pack(fill=tk.X, padx=5, pady=2)
+        
+        # Merge operation
+        merge_frame = ttk.LabelFrame(ops_frame, text="Merge Columns")
+        merge_frame.pack(fill=tk.X, pady=5)
+        
+        self.merge_separator = tk.StringVar()
+        ttk.Entry(
+            merge_frame,
+            textvariable=self.merge_separator,
+            placeholder="Separator"
+        ).pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Button(
+            merge_frame,
+            text="Merge Selected",
+            command=self.merge_columns
+        ).pack(fill=tk.X, padx=5, pady=2)
+        
+        # Type conversion
+        type_frame = ttk.LabelFrame(ops_frame, text="Convert Type")
+        type_frame.pack(fill=tk.X, pady=5)
+        
+        self.new_type = tk.StringVar(value="string")
+        types = ["string", "numeric", "datetime", "category", "boolean"]
+        ttk.OptionMenu(
+            type_frame,
+            self.new_type,
+            "string",
+            *types
+        ).pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Button(
+            type_frame,
+            text="Convert Type",
+            command=self.convert_type
+        ).pack(fill=tk.X, padx=5, pady=2)
     
     def process_file(self):
         """Processes the selected file"""
@@ -176,3 +229,79 @@ class ColumnManagerFrame(BaseToolFrame):
             
         except Exception as e:
             self.show_error(f"Error moving column: {str(e)}") 
+    
+    def split_column(self):
+        """Splits selected column"""
+        selection = self.column_list.curselection()
+        if not selection:
+            self.show_error("Please select a column to split")
+            return
+            
+        try:
+            processor = ColumnProcessor()
+            df = self.read_input_file()
+            
+            column = self.column_list.get(selection[0])
+            separator = self.split_separator.get() or None
+            
+            result, stats = processor.split_column(df, column, separator)
+            
+            self.write_output_file(result)
+            self.show_success(f"Column split: {stats['original_column']} → {', '.join(stats['new_columns'])}")
+            
+            # Update column list
+            self.process_file()
+            
+        except Exception as e:
+            self.show_error(f"Error splitting column: {str(e)}")
+    
+    def merge_columns(self):
+        """Merges selected columns"""
+        selection = self.column_list.curselection()
+        if len(selection) < 2:
+            self.show_error("Please select at least two columns to merge")
+            return
+            
+        try:
+            processor = ColumnProcessor()
+            df = self.read_input_file()
+            
+            columns = [self.column_list.get(idx) for idx in selection]
+            new_name = f"merged_{'_'.join(columns)}"[:63]  # Limit length
+            separator = self.merge_separator.get()
+            
+            result, stats = processor.merge_columns(df, columns, new_name, separator)
+            
+            self.write_output_file(result)
+            self.show_success(f"Columns merged: {', '.join(stats['merged_columns'])} → {stats['new_column']}")
+            
+            # Update column list
+            self.process_file()
+            
+        except Exception as e:
+            self.show_error(f"Error merging columns: {str(e)}")
+    
+    def convert_type(self):
+        """Converts column type"""
+        selection = self.column_list.curselection()
+        if not selection:
+            self.show_error("Please select a column to convert")
+            return
+            
+        try:
+            processor = ColumnProcessor()
+            df = self.read_input_file()
+            
+            column = self.column_list.get(selection[0])
+            new_type = self.new_type.get()
+            
+            result, stats = processor.convert_type(df, column, new_type)
+            
+            self.write_output_file(result)
+            self.show_success(
+                f"Column type converted: {stats['column']} "
+                f"({stats['original_type']} → {stats['new_type']})"
+            )
+            
+        except Exception as e:
+            self.show_error(f"Error converting type: {str(e)}") 
