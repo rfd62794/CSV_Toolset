@@ -131,3 +131,33 @@ class SampleProcessor(BaseProcessor):
             
         except Exception as e:
             raise RuntimeError(f"Error creating sample: {str(e)}") 
+    
+    def process_file(self, input_file: str, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Creates sample from CSV file
+        
+        Args:
+            input_file: Path to input CSV file
+            **options:
+                sample_size: Number of rows to sample
+                method: Sampling method ('sequential', 'random', 'stratified')
+                strat_column: Column to use for stratification
+                progress_callback: Optional progress callback function
+        """
+        # Set up progress tracking
+        if 'progress_callback' in options:
+            self.set_progress_callback(options.pop('progress_callback'))
+        
+        try:
+            # Read data
+            self.update_progress(0, "Reading file...")
+            df = self.reader.read_csv(input_file)
+            
+            # Process data
+            self.update_progress(40, "Creating sample...")
+            result_df, stats = self._process_data(df, **options)
+            
+            return result_df, stats
+            
+        except Exception as e:
+            raise RuntimeError(f"Error creating sample: {str(e)}") 

@@ -192,25 +192,29 @@ class SampleFrame(BaseToolFrame):
         
         try:
             # Get options
+            sample_size = int(self.size_var.get())
+            method = self.method_var.get()
+            
             options = {
-                'sample_size': int(self.size_var.get()),
-                'method': self.method_var.get()
+                'sample_size': sample_size,
+                'method': method,
+                'progress_callback': self.update_progress
             }
             
-            if options['method'] == 'stratified':
+            if method == 'stratified':
                 options['strat_column'] = self.strat_var.get()
             
             # Process file
             result_df, stats = self.processor.process_file(
                 self.input_file,
-                progress_callback=self.update_progress,
                 **options
             )
             
             # Generate output filename
+            method_name = method.replace('_', '-')
             output_file = self.file_manager.generate_output_path(
                 self.input_file,
-                f"sample_{stats['method']}_{stats['sampled_rows']}"
+                f"sample_{method_name}_{stats['sampled_rows']}"
             )
             
             # Save results
@@ -220,7 +224,7 @@ class SampleFrame(BaseToolFrame):
             
             # Show success message
             message = (
-                f"Complete! Created {stats['method']} sample with {stats['sampled_rows']:,} rows "
+                f"Complete! Created {method} sample with {stats['sampled_rows']:,} rows "
                 f"({stats['sampling_rate']}) from {stats['total_rows']:,} total rows.\n"
                 f"Saved to: {output_file}"
             )
