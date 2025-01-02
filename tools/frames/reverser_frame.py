@@ -1,18 +1,21 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import pandas as pd
 from ..base.tool_frame import BaseToolFrame
 from ..processors.reverser_processor import ReverserProcessor
 
 class ReverserFrame(BaseToolFrame):
+    """Frame for reversing row order in CSV files"""
+    
     def __init__(self, master):
         super().__init__(master)
         self.processor = ReverserProcessor()
         self.create_tool_specific_widgets()
-        
+    
     @classmethod
     def get_tool_name(cls) -> str:
         return "Order Reverser"
-        
+    
     def create_tool_specific_widgets(self):
         # Options frame
         self.options_frame = ttk.LabelFrame(self, text="Options")
@@ -42,15 +45,11 @@ class ReverserFrame(BaseToolFrame):
             
         try:
             # Process file
-            result, stats = self.processor.process_file(
+            result_df, stats = self.processor.process_file(
                 self.input_file,
                 keep_header=self.header_var.get(),
                 progress_callback=self.update_progress
             )
-            
-            if not isinstance(result, pd.DataFrame):
-                self.show_error(stats)  # stats contains error message
-                return
             
             # Generate output filename
             output_file = self.file_manager.generate_output_path(
@@ -59,7 +58,7 @@ class ReverserFrame(BaseToolFrame):
             )
             
             # Save results
-            success, error = self.writer.write_csv(result, output_file)
+            success, error = self.writer.write_csv(result_df, output_file)
             if not success:
                 raise Exception(error)
             
