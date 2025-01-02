@@ -1,111 +1,61 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-import pandas as pd
+from tkinter import ttk
 from ..base.tool_frame import BaseToolFrame
 from ..processors.phone_processor import PhoneProcessor
-from ..widgets.options_frame import OptionsFrame
-from ..widgets.list_selector import ListSelector
+from ..widgets.config_panel import ConfigPanel
 
 class PhoneFrame(BaseToolFrame):
-    """Frame for extracting phone numbers from CSV columns"""
-    
-    def __init__(self, master):
-        super().__init__(master)
-        self.processor = PhoneProcessor()
-        self.create_tool_specific_widgets()
+    """Tool for formatting phone numbers"""
     
     @classmethod
     def get_tool_name(cls) -> str:
-        return "Phone Extractor"
+        return "Phone Formatter"
     
-    def create_tool_specific_widgets(self):
-        """Creates the phone extractor specific widgets"""
-        # Column selection
-        self.column_frame = ttk.LabelFrame(self, text="Column Selection")
-        self.column_frame.pack(fill=tk.X, padx=10, pady=5)
+    def create_widgets(self):
+        # Create configuration panel
+        self.config_panel = ConfigPanel(self, "Phone Settings")
+        self.config_panel.pack(fill=tk.X, padx=5, pady=5)
         
-        self.column_selector = ListSelector(
-            self.column_frame,
-            "Select columns to search for phone numbers:"
+        # Add configuration options
+        self.config_panel.add_choice_option(
+            'column',
+            'Phone Column',
+            choices=[],  # Will be populated when file is loaded
+            callback=self._on_column_changed
         )
-        self.column_selector.pack(fill=tk.X, padx=5, pady=5)
         
-        # Options frame
-        self.options = OptionsFrame(self)
-        self.options.pack(fill=tk.X, padx=10, pady=5)
+        self.config_panel.add_choice_option(
+            'format',
+            'Output Format',
+            choices=[
+                '(XXX) XXX-XXXX',
+                'XXX-XXX-XXXX',
+                'XXX.XXX.XXXX',
+                'XXXXXXXXXX'
+            ],
+            callback=self._on_format_changed
+        )
         
-        # Add options
-        self.options.add_checkbox(
+        self.config_panel.add_boolean_option(
             'keep_original',
-            "Keep original columns",
+            'Keep Original Column',
             default=True
         )
         
-        self.options.add_checkbox(
-            'format_numbers',
-            "Format phone numbers",
-            default=True
+        self.config_panel.add_boolean_option(
+            'validate_numbers',
+            'Validate Numbers',
+            default=True,
+            callback=self._on_validate_changed
         )
         
-        # Add process button
-        self.process_btn = ttk.Button(
-            self,
-            text="Extract Phone Numbers",
-            command=self.process_file
-        )
-        self.process_btn.pack(pady=10)
+        # Add validation options
+        self.validation_frame = ttk.LabelFrame(self, text="Validation")
+        self.validation_frame.pack(fill=tk.X, padx=5, pady=5)
         
-        # Bind file selection to column update
-        self.file_path_var.trace_add('write', self.update_columns)
-    
-    def update_columns(self, *args):
-        """Updates available columns when file is selected"""
-        if self.input_file:
-            try:
-                columns = self.processor.get_columns(self.input_file)
-                self.column_selector.set_items(columns)
-            except Exception as e:
-                self.show_error(str(e))
-    
-    def process_file(self):
-        """Processes the selected file"""
-        if not self.input_file:
-            self.show_warning("Please select a file first")
-            return
-            
-        selected_columns = self.column_selector.get_selected()
-        if not selected_columns:
-            self.show_warning("Please select at least one column")
-            return
-            
-        try:
-            # Process file
-            result_df, stats = self.processor.process_file(
-                self.input_file,
-                columns=selected_columns,
-                keep_original=self.options.get_option('keep_original'),
-                format_numbers=self.options.get_option('format_numbers'),
-                progress_callback=self.update_progress
-            )
-            
-            # Generate output filename
-            output_file = self.file_manager.generate_output_path(
-                self.input_file,
-                "phones"
-            )
-            
-            # Save results
-            success, error = self.writer.write_csv(result_df, output_file)
-            if not success:
-                raise Exception(error)
-            
-            # Show success message
-            message = (
-                f"Complete! Found {stats['phones_found']:,} phone numbers in "
-                f"{stats['columns_processed']} column(s).\n"
-                f"Saved to: {output_file}"
-            )
-            self.update_progress(100, message)
-            
-        except Exception as e:
-            self.show_error(str(e)) 
+        self.config_panel.add_choice_option(
+            'invalid_handling',
+            'Invalid Number Handling',
+            choices=['Keep', 'Remove', 'Mark'],
+            callback=self._on_invalid_handling_changed
+        ) 
