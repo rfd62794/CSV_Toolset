@@ -66,21 +66,48 @@ class CSVToolkit(tk.Tk):
         self.main_container = ttk.Frame(self)
         self.main_container.pack(fill=tk.BOTH, expand=True)
         
-        # Create tool selection frame
+        # Create tool selection frame with tabs
         self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
         self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         
-        # Add tool buttons
-        tools = []
-        for category, tool_list in self.tool_manager.get_categories().items():
-            for tool_name in tool_list:
-                tools.append(tool_name)
+        # Create notebook for categories
+        self.category_notebook = ttk.Notebook(self.tool_frame)
+        self.category_notebook.pack(fill=tk.BOTH, expand=True)
+        
+        # Create category tabs
+        self.category_frames = {}
+        categories = {
+            "Analysis": ["CSV Inspector", "Data Profiler"],
+            "Data Cleaning": ["Column Sweeper", "Phone Extractor", "Data Validator"],
+            "Data Manipulation": [
+                "Sample Maker",
+                "Order Reverser",
+                "Column Appender",
+                "CSV Merger",
+                "CSV Splitter",
+                "Data Transformer",
+                "Data Filter",
+                "Column Manager"
+            ],
+            "Data Formatting": ["Data Reformatter"]
+        }
+        
+        # Create tabs and buttons for each category
+        for category, tools in categories.items():
+            # Create frame for this category
+            category_frame = ttk.Frame(self.category_notebook)
+            self.category_notebook.add(category_frame, text=category)
+            
+            # Add tool buttons to this category
+            for tool_name in tools:
                 btn = ttk.Button(
-                    self.tool_frame,
+                    category_frame,
                     text=tool_name,
                     command=lambda t=tool_name: self.show_tool(t)
                 )
                 btn.pack(padx=5, pady=2, fill=tk.X)
+            
+            self.category_frames[category] = category_frame
         
         # Create tool display area
         self.tool_display = ttk.Frame(self.main_container)
