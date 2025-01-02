@@ -7,14 +7,24 @@ import pytest
 import threading
 import queue
 
-class TestRunnerTool(tk.Tk):
+class TestRunnerTool(tk.Toplevel):
     """GUI tool for running tests"""
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         
         self.title("CSV Toolkit Test Runner")
         self.geometry("800x600")
+        
+        # Make dialog modal
+        self.transient(parent)
+        self.grab_set()
+        
+        # Center on parent
+        if parent:
+            x = parent.winfo_x() + (parent.winfo_width() - 800) // 2
+            y = parent.winfo_y() + (parent.winfo_height() - 600) // 2
+            self.geometry(f"+{x}+{y}")
         
         self.output_queue = queue.Queue()
         self.create_widgets()
@@ -101,6 +111,13 @@ class TestRunnerTool(tk.Tk):
             maximum=100
         )
         self.progress.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+        
+        # Add close button
+        ttk.Button(
+            control_frame,
+            text="Close",
+            command=self.destroy
+        ).pack(side=tk.LEFT, padx=5)
     
     def run_tests(self):
         """Runs the selected tests"""

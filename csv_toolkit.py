@@ -8,6 +8,8 @@ from tools.frames.phone_frame import PhoneFrame
 from tools.frames.sample_frame import SampleFrame
 from tools.frames.reverser_frame import ReverserFrame
 from tools.frames.appender_frame import AppenderFrame
+from pathlib import Path
+from tools.test_runner import TestRunnerTool
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -20,6 +22,7 @@ class CSVToolkit(tk.Tk):
         self.tool_manager = ToolManager()
         self.register_tools()
         
+        self.create_menu()
         self.create_widgets()
         
     def register_tools(self):
@@ -72,6 +75,25 @@ class CSVToolkit(tk.Tk):
         
         # Show welcome message
         self.show_welcome()
+        
+        # Create toolbar
+        toolbar = ttk.Frame(self)
+        toolbar.pack(fill=tk.X, padx=5, pady=2)
+        
+        # Add test runner button to toolbar
+        test_btn = ttk.Button(
+            toolbar,
+            text="Run Tests",
+            command=self.run_tests
+        )
+        test_btn.pack(side=tk.LEFT, padx=2)
+        
+        # Add tooltip
+        if hasattr(self, 'tooltip'):
+            self.tooltip.bind_widget(
+                test_btn,
+                "Run test suite (Ctrl+T)"
+            )
     
     def show_welcome(self):
         """Shows welcome message"""
@@ -104,6 +126,42 @@ class CSVToolkit(tk.Tk):
                 foreground='red'
             )
             error.pack(expand=True)
+    
+    def create_menu(self):
+        """Creates the menu bar"""
+        menubar = tk.Menu(self)
+        self.config(menu=menubar)
+        
+        # File menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_command(label="Exit", command=self.quit)
+        
+        # Tools menu
+        tools_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Tools", menu=tools_menu)
+        
+        # Add test runner to tools menu
+        tools_menu.add_command(
+            label="Run Tests",
+            command=self.run_tests,
+            accelerator="Ctrl+T"
+        )
+        
+        # Bind keyboard shortcut
+        self.bind_all("<Control-t>", lambda e: self.run_tests())
+        
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About", command=self.show_about)
+    
+    def run_tests(self):
+        """Opens the test runner tool"""
+        test_runner = TestRunnerTool()
+        test_runner.transient(self)  # Make it modal
+        test_runner.grab_set()  # Prevent interaction with main window
+        self.wait_window(test_runner)  # Wait for test runner to close
 
 if __name__ == "__main__":
     app = CSVToolkit()
