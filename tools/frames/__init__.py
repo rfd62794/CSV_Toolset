@@ -1,3 +1,4 @@
+from ..base.tool_frame import BaseToolFrame
 from .inspector_frame import InspectorFrame
 from .sweeper_frame import SweeperFrame
 from .phone_frame import PhoneFrame
@@ -13,6 +14,7 @@ from .profiler_frame import ProfilerFrame
 from .column_manager_frame import ColumnManagerFrame
 
 __all__ = [
+    'BaseToolFrame',
     'InspectorFrame',
     'SweeperFrame',
     'PhoneFrame',

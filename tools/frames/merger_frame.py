@@ -1,47 +1,66 @@
+import tkinter as tk
+from tkinter import ttk
+from ..base.tool_frame import BaseToolFrame
+from ..processors.merger_processor import MergerProcessor
+from ..widgets.config_panel import ConfigPanel
+
 class MergerFrame(BaseToolFrame):
-    """Tool for merging multiple CSV files"""
+    """Tool for merging CSV files"""
     
     @classmethod
     def get_tool_name(cls) -> str:
         return "CSV Merger"
     
-    def create_tool_specific_widgets(self):
-        # File selection for multiple files
-        self.files = []
-        self.file_list = tk.Listbox(self, height=5)
-        self.file_list.pack(fill=tk.X, padx=5, pady=5)
+    def create_widgets(self):
+        # Create configuration panel
+        self.config_panel = ConfigPanel(self, "Merge Settings")
+        self.config_panel.pack(fill=tk.X, padx=5, pady=5)
         
-        # Add/Remove file buttons
-        btn_frame = ttk.Frame(self)
-        btn_frame.pack(fill=tk.X, padx=5)
+        # Add merge type selection
+        self.config_panel.add_choice_option(
+            'merge_type',
+            'Merge Type',
+            choices=['append', 'join'],
+            callback=self._on_merge_type_changed
+        )
         
-        ttk.Button(
-            btn_frame,
-            text="Add Files",
-            command=self.add_files
-        ).pack(side=tk.LEFT, padx=2)
+        # Add join settings (initially hidden)
+        self.join_frame = ttk.LabelFrame(self, text="Join Settings")
         
-        ttk.Button(
-            btn_frame,
-            text="Remove Selected",
-            command=self.remove_file
-        ).pack(side=tk.LEFT, padx=2)
+        self.config_panel.add_text_option(
+            'join_key',
+            'Join Key Column',
+            callback=self._on_join_key_changed
+        )
         
-        # Merge options
-        self.merge_type = tk.StringVar(value="append")
-        options = ttk.LabelFrame(self, text="Merge Options")
-        options.pack(fill=tk.X, padx=5, pady=5)
+        self.config_panel.add_choice_option(
+            'join_type',
+            'Join Type',
+            choices=['inner', 'outer', 'left', 'right'],
+            callback=self._on_join_type_changed
+        )
         
-        ttk.Radiobutton(
-            options,
-            text="Append (Stack vertically)",
-            value="append",
-            variable=self.merge_type
-        ).pack(anchor=tk.W, padx=5)
-        
-        ttk.Radiobutton(
-            options,
-            text="Join (Merge on key)",
-            value="join",
-            variable=self.merge_type
-        ).pack(anchor=tk.W, padx=5) 
+        # Load saved configuration
+        saved_config = self.parent.tool_manager.get_tool_config(self.get_tool_name())
+        if saved_config:
+            self.config_panel.set_config(saved_config)
+    
+    def _on_merge_type_changed(self, value: str):
+        """Handles merge type change"""
+        if value == 'join':
+            self.join_frame.pack(fill=tk.X, padx=5, pady=5)
+        else:
+            self.join_frame.pack_forget()
+        self.save_config()
+    
+    def _on_join_key_changed(self, value: str):
+        """Handles join key change"""
+        self.save_config()
+    
+    def _on_join_type_changed(self, value: str):
+        """Handles join type change"""
+        self.save_config()
+    
+    def get_config(self) -> dict:
+        """Gets current tool configuration"""
+        return self.config_panel.get_config() 
