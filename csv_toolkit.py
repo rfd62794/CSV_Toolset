@@ -18,6 +18,7 @@ from tools.frames.filter_frame import FilterFrame
 from tools.frames.validator_frame import ValidatorFrame
 from tools.frames.profiler_frame import ProfilerFrame
 from tools.frames.column_manager_frame import ColumnManagerFrame
+from tools.frames.reformatter_frame import ReformatterFrame
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -55,6 +56,9 @@ class CSVToolkit(tk.Tk):
         self.tool_manager.register_tool(TransformerFrame, "Data Manipulation")
         self.tool_manager.register_tool(FilterFrame, "Data Manipulation")
         self.tool_manager.register_tool(ColumnManagerFrame, "Data Manipulation")
+        
+        # Data formatting tools
+        self.tool_manager.register_tool(ReformatterFrame, "Data Formatting")
     
     def create_widgets(self):
         """Creates main application widgets"""

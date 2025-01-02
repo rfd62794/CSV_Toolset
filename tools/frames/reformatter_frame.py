@@ -65,3 +65,39 @@ class ReformatterFrame(BaseToolFrame):
             height=10
         )
         self.preview_text.pack(fill=tk.BOTH, expand=True) 
+
+    def _on_delimiter_changed(self, value: str):
+        """Handles delimiter change"""
+        self.update_preview()
+        self.save_config()
+
+    def _on_quoting_changed(self, value: str):
+        """Handles quoting style change"""
+        self.update_preview()
+        self.save_config()
+
+    def update_preview(self):
+        """Updates the format preview"""
+        try:
+            if not hasattr(self, 'processor'):
+                self.processor = ReformatterProcessor()
+            
+            df = self.read_input_file()
+            if df is None:
+                return
+            
+            # Clear preview
+            self.preview_text.delete('1.0', tk.END)
+            
+            # Get sample rows
+            sample = df.head(5)
+            
+            # Apply formatting
+            config = self.config_panel.get_config()
+            formatted = self.processor.format_sample(sample, config)
+            
+            # Show preview
+            self.preview_text.insert('1.0', formatted)
+            
+        except Exception as e:
+            self.show_error(f"Preview error: {str(e)}") 

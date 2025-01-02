@@ -12,6 +12,7 @@ from .filter_frame import FilterFrame
 from .validator_frame import ValidatorFrame
 from .profiler_frame import ProfilerFrame
 from .column_manager_frame import ColumnManagerFrame
+from .reformatter_frame import ReformatterFrame
 
 __all__ = [
     'BaseToolFrame',
@@ -27,5 +28,6 @@ __all__ = [
     'FilterFrame',
     'ValidatorFrame',
     'ProfilerFrame',
-    'ColumnManagerFrame'
+    'ColumnManagerFrame',
+    'ReformatterFrame'
 ] 
