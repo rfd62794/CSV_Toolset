@@ -137,3 +137,21 @@ class ConfigPanel(ttk.LabelFrame):
             return True
         except ValueError:
             return False 
+    
+    def set_config(self, config: dict):
+        """Restores saved configuration"""
+        if not config:
+            return
+        
+        for name, value in config.items():
+            if name in self.variables:
+                try:
+                    self.variables[name].set(value)
+                except Exception as e:
+                    print(f"Error setting {name}: {str(e)}")
+    
+    def add_separator(self):
+        """Adds a visual separator"""
+        ttk.Separator(self, orient='horizontal').pack(
+            fill=tk.X, padx=5, pady=5
+        ) 

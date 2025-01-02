@@ -21,19 +21,30 @@ class ToolManager:
         self.registry.register_tool(tool_class, category, dependencies)
     
     def create_tool(self, tool_name: str, parent) -> BaseToolFrame:
-        """Creates a tool instance"""
-        # Check dependencies
-        deps_ok, error = self.registry.check_dependencies(tool_name)
-        if not deps_ok:
-            raise ValueError(error)
-        
-        # Find tool class
-        tool_class = self.registry.get_tool_class(tool_name)
-        if not tool_class:
-            raise ValueError(f"Tool not found: {tool_name}")
-        
-        # Create instance
-        return tool_class(parent)
+        """Creates a tool instance with better error handling"""
+        try:
+            # Check if tool exists
+            tool_class = self.registry.get_tool_class(tool_name)
+            if not tool_class:
+                raise ValueError(f"Tool not found: {tool_name}")
+            
+            # Check dependencies
+            deps_ok, error = self.registry.check_dependencies(tool_name)
+            if not deps_ok:
+                raise ValueError(error)
+            
+            # Create instance
+            tool = tool_class(parent)
+            
+            # Load saved configuration
+            config = self.get_tool_config(tool_name)
+            if hasattr(tool, 'config_panel'):
+                tool.config_panel.set_config(config)
+            
+            return tool
+            
+        except Exception as e:
+            raise RuntimeError(f"Error creating tool {tool_name}: {str(e)}")
     
     def get_categories(self) -> Dict[str, List[str]]:
         """Gets tool categories and their tools"""

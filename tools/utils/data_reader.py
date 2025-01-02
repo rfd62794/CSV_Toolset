@@ -112,3 +112,11 @@ class DataReader:
     def preview_data(self, file_path: str, nrows: int = 5) -> pd.DataFrame:
         """Gets preview of CSV data"""
         return self.read_csv(file_path, nrows=nrows) 
+
+    @staticmethod
+    def read_csv(file_path: str, **kwargs) -> pd.DataFrame:
+        """Reads CSV with error handling"""
+        try:
+            return pd.read_csv(file_path, **kwargs)
+        except Exception as e:
+            raise ValueError(f"Error reading file: {str(e)}") 

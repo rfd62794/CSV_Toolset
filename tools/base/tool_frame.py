@@ -34,20 +34,24 @@ class BaseToolFrame(ttk.Frame):
         raise NotImplementedError
     
     def create_widgets(self):
-        """Creates the tool's widgets"""
-        # Add file selector
-        self.file_selector = FileSelector(
-            self,
-            label_text="Input File",
-            multiple=False
-        )
-        self.file_selector.pack(fill=tk.X, padx=5, pady=5)
-        
-        # Add file change callback
-        self.file_selector.on_file_selected = self._on_file_selected
-        
-        # Create tool-specific widgets
-        self.create_tool_widgets()
+        """Creates the tool's widgets with better error handling"""
+        try:
+            # Add file selector
+            self.file_selector = FileSelector(
+                self,
+                label_text="Input File",
+                multiple=False
+            )
+            self.file_selector.pack(fill=tk.X, padx=5, pady=5)
+            
+            # Add file change callback
+            self.file_selector.on_file_selected = self._on_file_selected
+            
+            # Create tool-specific widgets
+            self.create_tool_widgets()
+            
+        except Exception as e:
+            self.show_error(f"Error initializing tool: {str(e)}")
 
     def _on_file_selected(self, file_path: str):
         """Handles file selection"""
@@ -93,13 +97,16 @@ class BaseToolFrame(ttk.Frame):
         self.error_label.pack(pady=5)
     
     def save_config(self):
-        """Saves tool configuration"""
-        if hasattr(self, 'config_panel'):
-            config = self.config_panel.get_config()
-            if self.tool_manager:
-                self.tool_manager.save_tool_config(
-                    self.get_tool_name(),
-                    config
-                )
-            else:
-                print("Warning: No tool_manager found, configuration not saved") 
+        """Saves tool configuration with validation"""
+        try:
+            if hasattr(self, 'config_panel'):
+                config = self.config_panel.get_config()
+                if self.tool_manager:
+                    self.tool_manager.save_tool_config(
+                        self.get_tool_name(),
+                        config
+                    )
+                else:
+                    print("Warning: No tool_manager found, configuration not saved")
+        except Exception as e:
+            print(f"Error saving configuration: {str(e)}") 

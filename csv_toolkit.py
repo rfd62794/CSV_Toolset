@@ -19,6 +19,7 @@ from tools.frames.validator_frame import ValidatorFrame
 from tools.frames.profiler_frame import ProfilerFrame
 from tools.frames.column_manager_frame import ColumnManagerFrame
 from tools.frames.reformatter_frame import ReformatterFrame
+import tkinter.messagebox as messagebox
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -82,16 +83,29 @@ class CSVToolkit(tk.Tk):
     
     def create_widgets(self):
         """Creates main application widgets"""
-        # Create main container
-        self.main_container = ttk.Frame(self)
-        self.main_container.pack(fill=tk.BOTH, expand=True)
+        # Add error handling for category creation
+        try:
+            # Create main container
+            self.main_container = ttk.Frame(self)
+            self.main_container.pack(fill=tk.BOTH, expand=True)
+            
+            # Initialize dictionaries before use
+            self.tool_buttons = {}
+            self.category_frames = {}
+            self.test_results = []
+            
+            # Add error handling for tool registration
+            self.register_tools()
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Initialization Error",
+                f"Error creating application: {str(e)}"
+            )
         
         # Create tool selection frame with tabs
         self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
         self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
-        
-        # Initialize tool buttons dictionary
-        self.tool_buttons = {}
         
         # Category descriptions and icons
         self.categories = {
@@ -152,9 +166,6 @@ class CSVToolkit(tk.Tk):
         # Create notebook for categories
         self.category_notebook = ttk.Notebook(self.tool_frame)
         self.category_notebook.pack(fill=tk.BOTH, expand=True)
-        
-        # Create category tabs
-        self.category_frames = {}
         
         for category, info in self.categories.items():
             # Create frame for this category
