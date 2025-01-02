@@ -54,6 +54,7 @@ class SampleProcessor(BaseProcessor):
                 sample_size: Number of rows to sample
                 method: Sampling method ('sequential', 'random', 'stratified')
                 strat_column: Column to use for stratification
+                random_seed: Optional seed for random sampling
         """
         # Validate input
         valid, error = self.validate_file(df)
@@ -68,17 +69,22 @@ class SampleProcessor(BaseProcessor):
             
         method = options.get('method', 'sequential')
         strat_column = options.get('strat_column')
+        random_seed = options.get('random_seed')
         
         total_rows = len(df)
         if sample_size > total_rows:
             sample_size = total_rows
         
         try:
+            # Set random seed if provided
+            if random_seed is not None:
+                np.random.seed(random_seed)
+            
             # Get sample based on method
             if method == 'random':
                 if self.progress:
                     self.update_progress(40, "Creating random sample...")
-                sample = df.sample(n=sample_size)
+                sample = df.sample(n=sample_size, random_state=random_seed)
                 
             elif method == 'stratified' and strat_column:
                 if self.progress:
