@@ -67,8 +67,18 @@ class ReverserProcessor(BaseProcessor):
         except Exception as e:
             raise RuntimeError(f"Error reversing rows: {str(e)}")
     
-    def process_file(self, input_file, keep_header=True, progress_callback=None):
-        """Reverses row order in CSV file"""
+    def process_file(self, input_file: str, keep_header: bool = True, progress_callback: Any = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        """
+        Reverses row order in CSV file
+        
+        Args:
+            input_file: Path to input CSV file
+            keep_header: Whether to keep header row at top
+            progress_callback: Optional progress callback function
+            
+        Returns:
+            Tuple[pd.DataFrame, Dict]: (processed_dataframe, statistics)
+        """
         self.set_progress_callback(progress_callback)
         
         try:
@@ -78,14 +88,9 @@ class ReverserProcessor(BaseProcessor):
             
             # Process data
             self.update_progress(50, "Reversing rows...")
-            result = self._process_data(df, keep_header)
+            result_df, stats = self._process_data(df, keep_header=keep_header)
             
-            stats = {
-                'total_rows': len(result),
-                'header_kept': keep_header
-            }
-            
-            return result, stats
+            return result_df, stats
             
         except Exception as e:
-            return False, str(e) 
+            raise RuntimeError(f"Error processing file: {str(e)}") 
