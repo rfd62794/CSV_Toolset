@@ -1,8 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox, scrolledtext
+import pandas as pd
 from ..base.tool_frame import BaseToolFrame
 from ..processors.sample_processor import SampleProcessor
 from ..widgets.options_frame import OptionsFrame
+from ..widgets.tooltip import ToolTip
 
 class SampleFrame(BaseToolFrame):
     """Frame for creating data samples"""
@@ -17,7 +19,10 @@ class SampleFrame(BaseToolFrame):
         return "Sample Maker"
     
     def create_tool_specific_widgets(self):
-        # Sample size frame with validation
+        # Add tooltips
+        self.tooltip = ToolTip(self)
+        
+        # Sample size frame
         self.size_frame = ttk.LabelFrame(self, text="Sample Size")
         self.size_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -26,40 +31,52 @@ class SampleFrame(BaseToolFrame):
         
         ttk.Label(size_frame, text="Number of rows:").pack(side=tk.LEFT)
         
+        # Sample size entry with validation
         vcmd = (self.register(self._validate_size), '%P')
-        self.size_var = tk.StringVar(value="100")
-        self.size_entry = ttk.Entry(
+        self.size_var = tk.StringVar(value=str(self.processor.config.SAMPLE_SETTINGS['default_sample_size']))
+        size_entry = ttk.Entry(
             size_frame,
             textvariable=self.size_var,
             validate='key',
             validatecommand=vcmd,
             width=10
         )
-        self.size_entry.pack(side=tk.LEFT, padx=5)
+        size_entry.pack(side=tk.LEFT, padx=5)
+        
+        self.tooltip.bind_widget(
+            size_entry,
+            f"Enter a number between {self.processor.config.SAMPLE_SETTINGS['min_sample_size']} "
+            f"and {self.processor.config.SAMPLE_SETTINGS['max_sample_size']:,}"
+        )
         
         # Method selection
         self.method_frame = ttk.LabelFrame(self, text="Sampling Method")
         self.method_frame.pack(fill=tk.X, padx=10, pady=5)
         
         self.method_var = tk.StringVar(value='sequential')
-        methods = [
-            ("Sequential (first N rows)", "sequential"),
-            ("Random sampling", "random"),
-            ("Stratified sampling", "stratified")
-        ]
         
-        for text, value in methods:
-            ttk.Radiobutton(
+        for text, value in self.processor.config.SAMPLE_SETTINGS['sampling_methods']:
+            method_btn = ttk.Radiobutton(
                 self.method_frame,
                 text=text,
                 value=value,
                 variable=self.method_var,
                 command=self._update_strat_visibility
-            ).pack(anchor=tk.W, padx=5, pady=2)
+            )
+            method_btn.pack(anchor=tk.W, padx=5, pady=2)
+            
+            # Add tooltips for each method
+            tooltips = {
+                'sequential': "Takes the first N rows from the file",
+                'random': "Takes a random sample of N rows",
+                'stratified': "Takes a proportional sample based on groups in a column"
+            }
+            self.tooltip.bind_widget(method_btn, tooltips[value])
         
         # Stratification options
         self.strat_frame = ttk.Frame(self.method_frame)
         ttk.Label(self.strat_frame, text="Stratify by:").pack(side=tk.LEFT, padx=5)
+        
         self.strat_var = tk.StringVar()
         self.strat_combo = ttk.Combobox(
             self.strat_frame,
@@ -69,14 +86,16 @@ class SampleFrame(BaseToolFrame):
         )
         self.strat_combo.pack(side=tk.LEFT, padx=5, pady=5)
         
-        # Options
-        self.options = OptionsFrame(self)
-        self.options.pack(fill=tk.X, padx=10, pady=5)
-        self.options.add_checkbox(
-            'keep_header',
-            "Keep header row",
-            default=True
+        # Preview frame
+        self.preview_frame = ttk.LabelFrame(self, text="Preview")
+        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        self.preview_text = scrolledtext.ScrolledText(
+            self.preview_frame,
+            wrap=tk.WORD,
+            height=10
         )
+        self.preview_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Process button
         self.process_btn = ttk.Button(
@@ -88,7 +107,9 @@ class SampleFrame(BaseToolFrame):
         
         # Bind events
         self.file_path_var.trace_add('write', self._update_columns)
-        self.method_var.trace_add('write', self._update_strat_visibility)
+        self.method_var.trace_add('write', self._update_preview)
+        self.size_var.trace_add('write', self._update_preview)
+        self.strat_var.trace_add('write', self._update_preview)
     
     def _validate_size(self, value: str) -> bool:
         """Validates sample size input"""
@@ -96,18 +117,20 @@ class SampleFrame(BaseToolFrame):
             return True
         try:
             size = int(value)
-            return size > 0
+            min_size = self.processor.config.SAMPLE_SETTINGS['min_sample_size']
+            return size >= min_size
         except ValueError:
             return False
     
     def _update_columns(self, *args):
-        """Updates available columns for stratification"""
+        """Updates available columns when file is selected"""
         if self.input_file:
             try:
                 columns = self.processor.get_columns(self.input_file)
                 self.strat_combo['values'] = columns
                 if columns:
                     self.strat_combo.current(0)
+                self._update_preview()
             except Exception as e:
                 self.show_error(str(e))
     
@@ -117,48 +140,83 @@ class SampleFrame(BaseToolFrame):
             self.strat_frame.pack(fill=tk.X, pady=5)
         else:
             self.strat_frame.pack_forget()
+        self._update_preview()
+    
+    def _update_preview(self, *args):
+        """Updates preview when options change"""
+        if not self.input_file:
+            return
+            
+        try:
+            # Get preview data
+            preview_df = self.processor.reader.preview_data(self.input_file)
+            
+            # Get sample options
+            options = {
+                'sample_size': int(self.size_var.get()),
+                'method': self.method_var.get()
+            }
+            
+            if options['method'] == 'stratified':
+                options['strat_column'] = self.strat_var.get()
+            
+            # Create sample
+            sample_df, stats = self.processor._process_data(preview_df, **options)
+            
+            # Update preview
+            self.preview_text.delete('1.0', tk.END)
+            self.preview_text.insert(tk.END, "Original data:\n")
+            self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
+            self.preview_text.insert(tk.END, "Sample preview:\n")
+            self.preview_text.insert(tk.END, str(sample_df) + "\n\n")
+            self.preview_text.insert(tk.END, f"Sampling rate: {stats['sampling_rate']}")
+            
+        except Exception as e:
+            if 'sample_size' in str(e):  # Don't show errors for invalid sample sizes during typing
+                return
+            self.show_error(f"Preview error: {str(e)}")
     
     def process_file(self):
         """Creates a sample from the CSV file"""
         if not self.input_file:
-            messagebox.showwarning("Warning", "Please select a file first")
+            self.show_warning("Please select a file first")
             return
-            
-        sample_size = self.size_var.get()
-        if not sample_size:
-            messagebox.showwarning("Warning", "Please enter a sample size")
-            return
-            
+        
         try:
-            # Process file and get results
-            df_sample, stats = self.processor.process_file(
-                self.input_file,
-                sample_size,
-                random=self.random_var.get(),
-                keep_header=self.header_var.get(),
-                progress_callback=self.update_progress
-            )
+            # Get options
+            options = {
+                'sample_size': int(self.size_var.get()),
+                'method': self.method_var.get()
+            }
             
-            if not df_sample:
-                self.show_error(stats)  # stats contains error message
-                return
+            if options['method'] == 'stratified':
+                options['strat_column'] = self.strat_var.get()
+            
+            # Process file
+            result_df, stats = self.processor.process_file(
+                self.input_file,
+                progress_callback=self.update_progress,
+                **options
+            )
             
             # Generate output filename
-            method = 'random' if self.random_var.get() else 'seq'
             output_file = self.file_manager.generate_output_path(
                 self.input_file,
-                f"sample_{sample_size}_{method}"
+                f"sample_{stats['method']}_{stats['sampled_rows']}"
             )
             
-            # Save the sample
-            success, error = self.writer.write_csv(df_sample, output_file)
+            # Save results
+            success, error = self.writer.write_csv(result_df, output_file)
             if not success:
                 raise Exception(error)
             
-            self.update_progress(100, 
-                f"Complete! Created {stats['sampling_method']} sample with "
-                f"{stats['sample_size']:,} rows. Saved to: {output_file}"
+            # Show success message
+            message = (
+                f"Complete! Created {stats['method']} sample with {stats['sampled_rows']:,} rows "
+                f"({stats['sampling_rate']}) from {stats['total_rows']:,} total rows.\n"
+                f"Saved to: {output_file}"
             )
+            self.update_progress(100, message)
             
         except Exception as e:
             self.show_error(str(e)) 
