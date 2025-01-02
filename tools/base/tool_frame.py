@@ -68,8 +68,14 @@ class BaseToolFrame(ttk.Frame):
         if not self.input_file:
             self.show_error("No input file selected")
             return None
+        
         try:
-            return pd.read_csv(self.input_file)
+            df = pd.read_csv(self.input_file)
+            if df.empty:
+                self.show_error("File contains no data")
+                return None
+            return df
+        
         except Exception as e:
             self.show_error(f"Error reading file: {str(e)}")
             return None

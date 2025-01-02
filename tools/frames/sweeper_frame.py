@@ -120,7 +120,8 @@ class SweeperFrame(BaseToolFrame):
         super()._on_file_selected(file_path)
         
         # Update column choices
-        if df := self.read_input_file():
+        df = self.read_input_file()
+        if df is not None and not df.empty:
             self.column_selector.set_items(df.columns.tolist())
             self.update_preview()
     
