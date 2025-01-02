@@ -99,6 +99,9 @@ class PhoneFrame(BaseToolFrame):
     def _on_file_selected(self, file_path: str):
         """Handles file selection"""
         try:
+            # Set input file first
+            self.input_file = file_path
+            
             # Read column names
             df = pd.read_csv(file_path)
             columns = df.columns.tolist()
