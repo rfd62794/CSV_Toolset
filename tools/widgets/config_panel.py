@@ -99,6 +99,37 @@ class ConfigPanel(ttk.LabelFrame):
         self.variables[name] = var
         self.frames[name] = frame
     
+    def add_number_option(self, name: str, label: str, min_val: float = None, 
+                         max_val: float = None, default: float = None, callback=None):
+        """Adds a numeric entry option"""
+        frame = ttk.Frame(self)
+        frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(frame, text=label).pack(side=tk.LEFT)
+        
+        vcmd = (self.register(lambda P: self._validate_number(P, min_val, max_val)), '%P')
+        var = tk.StringVar(value=str(default) if default is not None else '')
+        
+        entry = ttk.Entry(
+            frame,
+            textvariable=var,
+            validate='key',
+            validatecommand=vcmd,
+            width=10
+        )
+        entry.pack(side=tk.LEFT, padx=(5, 0))
+        
+        if min_val is not None or max_val is not None:
+            range_text = f"({min_val if min_val is not None else '-∞'}"
+            range_text += f" to {max_val if max_val is not None else '∞'})"
+            ttk.Label(frame, text=range_text).pack(side=tk.LEFT, padx=(5, 0))
+        
+        self.variables[name] = var
+        self.frames[name] = frame
+        
+        if callback:
+            var.trace_add('write', lambda *args: callback(var.get()))
+    
     def get_config(self) -> dict:
         """Gets current configuration values"""
         return {
@@ -123,13 +154,13 @@ class ConfigPanel(ttk.LabelFrame):
         if name in self.frames:
             self.frames[name].pack(fill=tk.X, padx=5, pady=2)
     
-    def _validate_number(self, value: str, min_val=None, max_val=None) -> bool:
+    def _validate_number(self, value: str, min_val: float = None, max_val: float = None) -> bool:
         """Validates numeric input"""
-        if value == "":
+        if not value:  # Allow empty value
             return True
             
         try:
-            num = int(value)
+            num = float(value)
             if min_val is not None and num < min_val:
                 return False
             if max_val is not None and num > max_val:
