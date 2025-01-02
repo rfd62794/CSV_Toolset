@@ -64,18 +64,48 @@ class BaseToolFrame(ttk.Frame):
         raise NotImplementedError
     
     def read_input_file(self) -> pd.DataFrame:
-        """Reads the input CSV file"""
+        """Reads the input CSV file with better type handling"""
         if not self.input_file:
             self.show_error("No input file selected")
             return None
         
         try:
-            df = pd.read_csv(self.input_file)
+            # First attempt: Try to infer types with low_memory=False
+            df = pd.read_csv(
+                self.input_file,
+                low_memory=False,
+                dtype_backend='numpy_nullable'  # Better handling of missing values
+            )
+            
+            # If we still have mixed types, read everything as string
+            mixed_cols = df.select_dtypes(include=['object']).columns
+            if len(mixed_cols) > 0:
+                # Create dtype dict for all columns
+                dtypes = {col: 'string' for col in mixed_cols}
+                
+                # Try to convert numeric columns
+                for col in df.columns:
+                    if col not in mixed_cols:
+                        try:
+                            # Check if column can be numeric
+                            pd.to_numeric(df[col], errors='raise')
+                            dtypes[col] = 'float64'  # Use float64 to handle both integers and decimals
+                        except (ValueError, TypeError):
+                            dtypes[col] = 'string'
+                
+                # Re-read with explicit dtypes
+                df = pd.read_csv(
+                    self.input_file,
+                    dtype=dtypes,
+                    low_memory=False
+                )
+            
             if df.empty:
                 self.show_error("File contains no data")
                 return None
+            
             return df
-        
+            
         except Exception as e:
             self.show_error(f"Error reading file: {str(e)}")
             return None
@@ -116,3 +146,67 @@ class BaseToolFrame(ttk.Frame):
                     print("Warning: No tool_manager found, configuration not saved")
         except Exception as e:
             print(f"Error saving configuration: {str(e)}") 
+    
+    def show_warning(self, message: str):
+        """Shows warning message"""
+        if hasattr(self, 'warning_label'):
+            self.warning_label.destroy()
+        self.warning_label = ttk.Label(
+            self,
+            text=message,
+            foreground='orange'
+        )
+        self.warning_label.pack(pady=5)
+    
+    def read_input_file(self) -> pd.DataFrame:
+        """Reads the input CSV file with better type handling"""
+        if not self.input_file:
+            self.show_error("No input file selected")
+            return None
+        
+        try:
+            # First attempt: Try to infer types with low_memory=False
+            df = pd.read_csv(
+                self.input_file,
+                low_memory=False,
+                dtype_backend='numpy_nullable'  # Better handling of missing values
+            )
+            
+            # If we still have mixed types, read everything as string
+            mixed_cols = df.select_dtypes(include=['object']).columns
+            if len(mixed_cols) > 0:
+                # Create dtype dict for all columns
+                dtypes = {col: 'string' for col in mixed_cols}
+                
+                # Try to convert numeric columns
+                for col in df.columns:
+                    if col not in mixed_cols:
+                        try:
+                            # Check if column can be numeric
+                            pd.to_numeric(df[col], errors='raise')
+                            dtypes[col] = 'float64'  # Use float64 to handle both integers and decimals
+                        except (ValueError, TypeError):
+                            dtypes[col] = 'string'
+                
+                # Re-read with explicit dtypes
+                df = pd.read_csv(
+                    self.input_file,
+                    dtype=dtypes,
+                    low_memory=False
+                )
+            
+            if df.empty:
+                self.show_error("File contains no data")
+                return None
+            
+            if len(mixed_cols) > 0:
+                self.show_warning(
+                    f"Mixed data types detected in columns: {', '.join(mixed_cols)}. "
+                    "Data will be read as strings to prevent issues."
+                )
+            
+            return df
+            
+        except Exception as e:
+            self.show_error(f"Error reading file: {str(e)}")
+            return None 
