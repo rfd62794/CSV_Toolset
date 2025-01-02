@@ -402,6 +402,74 @@ class CSVToolkit(tk.Tk):
             else:
                 button.pack_forget()
 
+    def show_about(self):
+        """Shows about dialog"""
+        about_window = tk.Toplevel(self)
+        about_window.title("About CSV Toolkit")
+        about_window.geometry("400x300")
+        about_window.resizable(False, False)
+        
+        # Center window
+        about_window.transient(self)
+        about_window.grab_set()
+        
+        # Add content
+        content_frame = ttk.Frame(about_window, padding="20")
+        content_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Title
+        title = ttk.Label(
+            content_frame,
+            text="CSV Toolkit",
+            font=('Helvetica', 16, 'bold')
+        )
+        title.pack(pady=(0, 10))
+        
+        # Version
+        version = ttk.Label(
+            content_frame,
+            text="Version 1.0.0"
+        )
+        version.pack()
+        
+        # Description
+        description = ttk.Label(
+            content_frame,
+            text=(
+                "A collection of tools for working with CSV files.\n\n"
+                "Features:\n"
+                "• Data Analysis\n"
+                "• Data Cleaning\n"
+                "• Data Manipulation\n"
+                "• Data Formatting"
+            ),
+            justify=tk.LEFT,
+            wraplength=350
+        )
+        description.pack(pady=20)
+        
+        # Copyright
+        copyright = ttk.Label(
+            content_frame,
+            text="© 2024 CSV Toolkit"
+        )
+        copyright.pack(pady=(20, 0))
+        
+        # Close button
+        ttk.Button(
+            content_frame,
+            text="Close",
+            command=about_window.destroy
+        ).pack(pady=20)
+        
+        # Center the window on screen
+        about_window.update_idletasks()
+        width = about_window.winfo_width()
+        height = about_window.winfo_height()
+        x = (about_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (about_window.winfo_screenheight() // 2) - (height // 2)
+        about_window.geometry(f'+{x}+{y}')
+
 if __name__ == "__main__":
     app = CSVToolkit()
     app.mainloop() 
