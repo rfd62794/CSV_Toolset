@@ -160,7 +160,8 @@ class SampleFrame(BaseToolFrame):
                 
             options = {
                 'sample_size': preview_size,
-                'method': self.method_var.get()
+                'method': self.method_var.get(),
+                'random_seed': 42  # Use fixed seed for preview
             }
             
             if options['method'] == 'stratified':
@@ -175,8 +176,17 @@ class SampleFrame(BaseToolFrame):
             self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
             self.preview_text.insert(tk.END, "Sample preview:\n")
             self.preview_text.insert(tk.END, str(sample_df) + "\n\n")
+            
+            # Show distribution stats for stratified sampling
+            if options['method'] == 'stratified':
+                self.preview_text.insert(tk.END, "Group distribution:\n")
+                for group, count in stats.get('group_stats', {}).items():
+                    self.preview_text.insert(tk.END, f"{group}: {count} rows\n")
+                self.preview_text.insert(tk.END, "\n")
+            
             self.preview_text.insert(tk.END, 
-                f"Preview showing {preview_size} rows (Full sample will use {requested_size:,} rows)"
+                f"Preview showing {preview_size} rows (Full sample will use {requested_size:,} rows)\n"
+                f"Sampling rate: {stats['sampling_rate']}"
             )
             
         except Exception as e:
@@ -198,7 +208,8 @@ class SampleFrame(BaseToolFrame):
             options = {
                 'sample_size': sample_size,
                 'method': method,
-                'progress_callback': self.update_progress
+                'progress_callback': self.update_progress,
+                'random_seed': None  # Allow random sampling in actual processing
             }
             
             if method == 'stratified':
@@ -222,13 +233,20 @@ class SampleFrame(BaseToolFrame):
             if not success:
                 raise Exception(error)
             
-            # Show success message
-            message = (
-                f"Complete! Created {method} sample with {stats['sampled_rows']:,} rows "
-                f"({stats['sampling_rate']}) from {stats['total_rows']:,} total rows.\n"
-                f"Saved to: {output_file}"
-            )
-            self.update_progress(100, message)
+            # Show success message with distribution stats if stratified
+            message = [
+                f"Complete! Created {method} sample with {stats['sampled_rows']:,} rows",
+                f"({stats['sampling_rate']}) from {stats['total_rows']:,} total rows."
+            ]
+            
+            if method == 'stratified' and 'group_stats' in stats:
+                message.append("\nGroup distribution:")
+                for group, count in stats['group_stats'].items():
+                    message.append(f"{group}: {count} rows")
+                    
+            message.append(f"\nSaved to: {output_file}")
+            
+            self.update_progress(100, "\n".join(message))
             
         except Exception as e:
             self.show_error(str(e)) 
