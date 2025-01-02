@@ -6,12 +6,20 @@ from typing import List, Optional
 import pytest
 import threading
 import queue
+import json
+from datetime import datetime
 
 class TestRunnerTool(tk.Toplevel):
     """GUI tool for running tests"""
     
-    def __init__(self, parent=None):
+    CONFIG_FILE = Path(__file__).parent.parent / 'config' / 'test_config.json'
+    
+    def __init__(self, parent=None, callback=None):
         super().__init__(parent)
+        
+        self.parent = parent
+        self.callback = callback  # Callback for reporting results to main window
+        self.load_config()
         
         self.title("CSV Toolkit Test Runner")
         self.geometry("800x600")
@@ -118,6 +126,13 @@ class TestRunnerTool(tk.Toplevel):
             text="Close",
             command=self.destroy
         ).pack(side=tk.LEFT, padx=5)
+        
+        # Add save config button
+        ttk.Button(
+            control_frame,
+            text="Save Config",
+            command=self.save_config
+        ).pack(side=tk.LEFT, padx=5)
     
     def run_tests(self):
         """Runs the selected tests"""
@@ -185,15 +200,87 @@ class TestRunnerTool(tk.Toplevel):
             self.after(100, self.update_output)
     
     def show_result(self, result: int):
-        """Shows test result"""
+        """Shows test result and reports to main window"""
+        # Create result data
+        result_data = {
+            'timestamp': datetime.now().isoformat(),
+            'exit_code': result,
+            'success': result == 0,
+            'categories': [
+                cat for cat, var in self.category_vars.items()
+                if var.get()
+            ]
+        }
+        
+        # Show result dialog
         if result == 0:
             messagebox.showinfo("Success", "All tests passed!")
         else:
             messagebox.showerror("Failed", f"Some tests failed (exit code: {result})")
+        
+        # Report to main window
+        if self.callback:
+            self.callback(result_data)
     
     def show_error(self, error: str):
         """Shows error message"""
         messagebox.showerror("Error", f"Error running tests: {error}")
+    
+    def load_config(self):
+        """Loads test configuration"""
+        self.config = {
+            'categories': {
+                'unit': True,
+                'integration': True,
+                'performance': True
+            },
+            'options': {
+                'verbose': True,
+                'fail_fast': False
+            }
+        }
+        
+        try:
+            if self.CONFIG_FILE.exists():
+                with open(self.CONFIG_FILE, 'r') as f:
+                    saved_config = json.load(f)
+                    self.config.update(saved_config)
+        except Exception as e:
+            if self.parent:
+                messagebox.showwarning(
+                    "Config Load Error",
+                    f"Error loading config: {str(e)}"
+                )
+    
+    def save_config(self):
+        """Saves test configuration"""
+        try:
+            self.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+            
+            config = {
+                'categories': {
+                    cat: var.get()
+                    for cat, var in self.category_vars.items()
+                },
+                'options': {
+                    'verbose': self.verbose_var.get(),
+                    'fail_fast': self.fail_fast_var.get()
+                }
+            }
+            
+            with open(self.CONFIG_FILE, 'w') as f:
+                json.dump(config, f, indent=4)
+                
+            messagebox.showinfo(
+                "Config Saved",
+                "Test configuration saved successfully!"
+            )
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Save Error",
+                f"Error saving config: {str(e)}"
+            )
 
 if __name__ == '__main__':
     app = TestRunnerTool()

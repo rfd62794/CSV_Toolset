@@ -10,6 +10,7 @@ from tools.frames.reverser_frame import ReverserFrame
 from tools.frames.appender_frame import AppenderFrame
 from pathlib import Path
 from tools.test_runner import TestRunnerTool
+from datetime import datetime
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -24,6 +25,8 @@ class CSVToolkit(tk.Tk):
         
         self.create_menu()
         self.create_widgets()
+        
+        self.test_results = []
         
     def register_tools(self):
         """Registers available tools with categories"""
@@ -94,6 +97,36 @@ class CSVToolkit(tk.Tk):
                 test_btn,
                 "Run test suite (Ctrl+T)"
             )
+        
+        # Add test results frame
+        self.results_frame = ttk.LabelFrame(self, text="Test Results")
+        self.results_frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        # Results tree
+        self.results_tree = ttk.Treeview(
+            self.results_frame,
+            columns=('timestamp', 'result', 'categories'),
+            show='headings',
+            height=3
+        )
+        
+        # Configure columns
+        self.results_tree.heading('timestamp', text='Time')
+        self.results_tree.heading('result', text='Result')
+        self.results_tree.heading('categories', text='Categories')
+        
+        self.results_tree.column('timestamp', width=150)
+        self.results_tree.column('result', width=100)
+        self.results_tree.column('categories', width=200)
+        
+        self.results_tree.pack(fill=tk.X, padx=5, pady=2)
+        
+        # Add clear results button
+        ttk.Button(
+            self.results_frame,
+            text="Clear History",
+            command=self.clear_test_results
+        ).pack(side=tk.RIGHT, padx=5, pady=2)
     
     def show_welcome(self):
         """Shows welcome message"""
@@ -158,10 +191,43 @@ class CSVToolkit(tk.Tk):
     
     def run_tests(self):
         """Opens the test runner tool"""
-        test_runner = TestRunnerTool()
-        test_runner.transient(self)  # Make it modal
-        test_runner.grab_set()  # Prevent interaction with main window
-        self.wait_window(test_runner)  # Wait for test runner to close
+        test_runner = TestRunnerTool(
+            parent=self,
+            callback=self.update_test_results
+        )
+    
+    def update_test_results(self, result_data: dict):
+        """Updates test results display"""
+        # Add to results list
+        self.test_results.append(result_data)
+        
+        # Format timestamp
+        timestamp = datetime.fromisoformat(result_data['timestamp'])
+        formatted_time = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Format result
+        result_text = "✓ Passed" if result_data['success'] else "❌ Failed"
+        
+        # Format categories
+        categories = ', '.join(result_data['categories'])
+        
+        # Add to tree
+        self.results_tree.insert(
+            '',
+            0,  # Insert at top
+            values=(formatted_time, result_text, categories)
+        )
+        
+        # Keep only last 10 results
+        if len(self.test_results) > 10:
+            self.test_results.pop(0)  # Remove oldest
+            self.results_tree.delete(self.results_tree.get_children()[-1])
+    
+    def clear_test_results(self):
+        """Clears test results history"""
+        self.test_results.clear()
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
 
 if __name__ == "__main__":
     app = CSVToolkit()
