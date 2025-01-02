@@ -151,9 +151,15 @@ class SampleFrame(BaseToolFrame):
             # Get preview data
             preview_df = self.processor.reader.preview_data(self.input_file)
             
-            # Get sample options
+            # Get sample options - limit sample size to available rows for preview
+            try:
+                requested_size = int(self.size_var.get())
+                preview_size = min(requested_size, len(preview_df))
+            except ValueError:
+                preview_size = len(preview_df)
+                
             options = {
-                'sample_size': int(self.size_var.get()),
+                'sample_size': preview_size,
                 'method': self.method_var.get()
             }
             
@@ -169,7 +175,9 @@ class SampleFrame(BaseToolFrame):
             self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
             self.preview_text.insert(tk.END, "Sample preview:\n")
             self.preview_text.insert(tk.END, str(sample_df) + "\n\n")
-            self.preview_text.insert(tk.END, f"Sampling rate: {stats['sampling_rate']}")
+            self.preview_text.insert(tk.END, 
+                f"Preview showing {preview_size} rows (Full sample will use {requested_size:,} rows)"
+            )
             
         except Exception as e:
             if 'sample_size' in str(e):  # Don't show errors for invalid sample sizes during typing
