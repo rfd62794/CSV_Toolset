@@ -3,6 +3,8 @@ from tkinter import ttk
 from ..base.tool_frame import BaseToolFrame
 from ..processors.sample_processor import SampleProcessor
 from ..widgets.config_panel import ConfigPanel
+from ..widgets.file_selector import FileSelector
+import pandas as pd
 
 class SampleFrame(BaseToolFrame):
     """Tool for sampling CSV data"""
@@ -12,6 +14,15 @@ class SampleFrame(BaseToolFrame):
         return "Data Sampler"
     
     def create_widgets(self):
+        # Add file selector
+        self.file_selector = FileSelector(
+            self,
+            "Input CSV File",
+            multiple=False
+        )
+        self.file_selector.pack(fill=tk.X, padx=5, pady=5)
+        self.file_selector.on_file_selected = self._on_file_selected
+        
         # Create configuration panel
         self.config_panel = ConfigPanel(self, "Sampling Settings")
         self.config_panel.pack(fill=tk.X, padx=5, pady=5)
@@ -24,35 +35,38 @@ class SampleFrame(BaseToolFrame):
             callback=self._on_sample_type_changed
         )
         
-        self.config_panel.add_numeric_option(
+        self.config_panel.add_number_option(
             'sample_size',
             'Sample Size',
-            default=100,
             min_val=1,
-            callback=self._on_size_changed
+            callback=self._on_sample_size_changed
         )
         
-        self.config_panel.add_boolean_option(
-            'keep_proportion',
-            'Maintain Proportions',
-            default=True,
-            callback=self._on_proportion_changed
-        )
-        
-        # Stratification options
+        # Add stratification options (initially hidden)
         self.config_panel.add_choice_option(
             'strat_column',
-            'Stratify By Column',
-            choices=[],  # Will be populated when file is loaded
+            'Stratification Column',
+            choices=[],
+            visible=False,
             callback=self._on_strat_column_changed
         )
         
-        # Preview frame
-        self.preview_frame = ttk.LabelFrame(self, text="Sample Preview")
+        # Create preview frame
+        self.preview_frame = ttk.LabelFrame(self, text="Preview")
         self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        self.preview_tree = ttk.Treeview(self.preview_frame)
+        # Create preview tree
+        self.preview_tree = ttk.Treeview(self.preview_frame, show='headings')
         self.preview_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(
+            self.preview_frame,
+            orient="vertical",
+            command=self.preview_tree.yview
+        )
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.preview_tree.configure(yscrollcommand=scrollbar.set)
         
         # Add process button
         self.process_btn = ttk.Button(
@@ -62,30 +76,45 @@ class SampleFrame(BaseToolFrame):
         )
         self.process_btn.pack(pady=10)
     
+    def _on_file_selected(self, file_path: str):
+        """Handles file selection"""
+        try:
+            # Set input file
+            self.input_file = file_path
+            
+            # Read column names for stratification
+            df = pd.read_csv(file_path)
+            columns = df.columns.tolist()
+            
+            # Update stratification column choices
+            self.config_panel.update_choices('strat_column', columns)
+            
+            # Update preview
+            self.update_preview()
+            
+        except Exception as e:
+            self.show_error(f"Error reading file: {str(e)}")
+    
     def _on_sample_type_changed(self, value: str):
-        """Handles sample type change"""
+        """Handles sampling method change"""
         # Show/hide stratification options
         if value == 'Stratified':
             self.config_panel.show_option('strat_column')
         else:
             self.config_panel.hide_option('strat_column')
-        self.save_config()
+        
         self.update_preview()
+        self.save_config()
     
-    def _on_size_changed(self, value: int):
+    def _on_sample_size_changed(self, value: str):
         """Handles sample size change"""
-        self.save_config()
         self.update_preview()
-    
-    def _on_proportion_changed(self, value: bool):
-        """Handles proportion option change"""
         self.save_config()
-        self.update_preview()
     
     def _on_strat_column_changed(self, value: str):
         """Handles stratification column change"""
-        self.save_config()
         self.update_preview()
+        self.save_config()
     
     def update_preview(self):
         """Updates the sample preview"""

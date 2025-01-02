@@ -1,0 +1,6 @@
+{
+    "column": "Phone Number",
+    "format": "(XXX) XXX-XXXX",
+    "keep_original": true,
+    "validate_numbers": true
+}
