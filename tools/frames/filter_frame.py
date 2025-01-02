@@ -26,9 +26,18 @@ class FilterFrame(BaseToolFrame):
         
         self.config_panel.add_choice_option(
             'operator',
-            'Operator',
-            choices=['equals', 'not_equals', 'greater_than', 'less_than', 
-                    'contains', 'starts_with', 'ends_with'],
+            'Filter Operator',
+            choices=[
+                'Equals',
+                'Not Equals',
+                'Contains',
+                'Starts With',
+                'Ends With',
+                'Greater Than',
+                'Less Than',
+                'Is Null',
+                'Is Not Null'
+            ],
             callback=self._on_operator_changed
         )
         
@@ -36,4 +45,29 @@ class FilterFrame(BaseToolFrame):
             'filter_value',
             'Filter Value',
             callback=self._on_value_changed
-        ) 
+        )
+        
+        self.config_panel.add_boolean_option(
+            'case_sensitive',
+            'Case Sensitive',
+            default=False
+        )
+        
+        # Preview frame
+        self.preview_frame = ttk.LabelFrame(self, text="Filter Preview")
+        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.preview_tree = ttk.Treeview(self.preview_frame)
+        self.preview_tree.pack(fill=tk.BOTH, expand=True)
+    
+    def _on_column_changed(self, value: str):
+        self.update_preview()
+        self.save_config()
+    
+    def _on_operator_changed(self, value: str):
+        self.update_preview()
+        self.save_config()
+    
+    def _on_value_changed(self, value: str):
+        self.update_preview()
+        self.save_config() 
