@@ -3,6 +3,9 @@ from tkinter import ttk
 from ..base.tool_frame import BaseToolFrame
 from ..processors.splitter_processor import SplitterProcessor
 from ..widgets.config_panel import ConfigPanel
+import pandas as pd
+from pathlib import Path
+from typing import Dict, List, Any
 
 class SplitterFrame(BaseToolFrame):
     """Tool for splitting CSV files"""
@@ -62,6 +65,27 @@ class SplitterFrame(BaseToolFrame):
             default='split_{n}'
         ) 
 
+        # Add output preview
+        self.preview_frame = ttk.LabelFrame(self, text="Output Preview")
+        self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.preview_tree = ttk.Treeview(
+            self.preview_frame,
+            columns=('File', 'Rows'),
+            show='headings'
+        )
+        self.preview_tree.heading('File', text='Output File')
+        self.preview_tree.heading('Rows', text='Row Count')
+        self.preview_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Add process button
+        self.process_btn = ttk.Button(
+            self,
+            text="Split File",
+            command=self.process_file
+        )
+        self.process_btn.pack(pady=10)
+
     def _on_split_type_changed(self, value: str):
         """Handles split type change"""
         # Show/hide relevant options based on split type
@@ -82,3 +106,38 @@ class SplitterFrame(BaseToolFrame):
     def _on_column_changed(self, value: str):
         """Handles column selection change"""
         self.save_config() 
+
+    def process_file(self):
+        """Processes the input file"""
+        if not hasattr(self, 'processor'):
+            self.processor = SplitterProcessor()
+            
+        try:
+            config = self.config_panel.get_config()
+            result = self.processor.process_file(self.input_file, config)
+            
+            if result['success']:
+                self.show_success(f"Split into {len(result['files_created'])} files")
+                self.update_preview(result['files_created'])
+            else:
+                self.show_error(result['error'])
+                
+        except Exception as e:
+            self.show_error(f"Error processing file: {str(e)}")
+    
+    def update_preview(self, files: List[str]):
+        """Updates the preview with created files"""
+        # Clear previous preview
+        for item in self.preview_tree.get_children():
+            self.preview_tree.delete(item)
+            
+        # Add new files
+        for file_path in files:
+            try:
+                df = pd.read_csv(file_path)
+                self.preview_tree.insert('', tk.END, values=(
+                    Path(file_path).name,
+                    len(df)
+                ))
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}") 

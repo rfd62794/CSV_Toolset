@@ -1,66 +1,85 @@
-import math
-from typing import List, Tuple, Dict, Any
 import pandas as pd
 from pathlib import Path
+from typing import Dict, List, Any
 from ..base.base_processor import BaseProcessor
 
 class SplitterProcessor(BaseProcessor):
     """Processor for splitting CSV files"""
     
-    def __init__(self):
-        super().__init__()
-        self.reader = self.get_reader()
-        self.writer = self.get_writer()
+    def split_by_rows(self, df: pd.DataFrame, row_count: int, 
+                     keep_headers: bool = True) -> List[pd.DataFrame]:
+        """Splits dataframe by row count"""
+        chunks = []
+        for i in range(0, len(df), row_count):
+            chunk = df.iloc[i:i + row_count].copy()
+            chunks.append(chunk)
+        return chunks
     
-    def split_file(self, file_path: str, split_type: str, size: int) -> List[str]:
-        """Splits a CSV file into multiple files"""
+    def split_by_percentage(self, df: pd.DataFrame, percentage: float,
+                          keep_headers: bool = True) -> List[pd.DataFrame]:
+        """Splits dataframe by percentage"""
+        row_count = int(len(df) * (percentage / 100))
+        return [
+            df.iloc[:row_count].copy(),
+            df.iloc[row_count:].copy()
+        ]
+    
+    def split_by_column(self, df: pd.DataFrame, column: str,
+                       keep_headers: bool = True) -> Dict[Any, pd.DataFrame]:
+        """Splits dataframe by unique column values"""
+        return {
+            value: group.copy()
+            for value, group in df.groupby(column)
+        }
+    
+    def process_file(self, input_file: str, config: dict) -> Dict[str, Any]:
+        """Processes the input file according to configuration"""
+        df = pd.read_csv(input_file)
+        output_dir = Path(input_file).parent
+        pattern = config.get('output_pattern', 'split_{n}')
+        keep_headers = config.get('keep_headers', True)
+        
+        split_type = config.get('split_type')
+        result = {
+            'success': True,
+            'files_created': [],
+            'error': None
+        }
+        
         try:
-            df = self.reader.read_csv(file_path)
-            
-            if split_type == "rows":
-                return self._split_by_rows(df, file_path, size)
-            elif split_type == "size":
-                return self._split_by_size(df, file_path, size)
-            else:
-                raise ValueError(f"Invalid split type: {split_type}")
+            if split_type == 'Row Count':
+                row_count = config.get('row_count', 1000)
+                chunks = self.split_by_rows(df, row_count, keep_headers)
                 
+                for i, chunk in enumerate(chunks, 1):
+                    output_file = output_dir / f"{pattern.format(n=i)}.csv"
+                    chunk.to_csv(output_file, index=False)
+                    result['files_created'].append(str(output_file))
+                    
+            elif split_type == 'Percentage':
+                percentage = config.get('percentage', 50)
+                chunks = self.split_by_percentage(df, percentage, keep_headers)
+                
+                for i, chunk in enumerate(['first', 'second']):
+                    output_file = output_dir / f"{pattern.format(n=chunk)}.csv"
+                    chunks[i].to_csv(output_file, index=False)
+                    result['files_created'].append(str(output_file))
+                    
+            elif split_type == 'Column Value':
+                column = config.get('split_column')
+                if not column:
+                    raise ValueError("No split column specified")
+                    
+                chunks = self.split_by_column(df, column, keep_headers)
+                
+                for value, chunk in chunks.items():
+                    output_file = output_dir / f"{pattern.format(n=value)}.csv"
+                    chunk.to_csv(output_file, index=False)
+                    result['files_created'].append(str(output_file))
+            
+            return result
+            
         except Exception as e:
-            raise RuntimeError(f"Error splitting file: {str(e)}")
-    
-    def _split_by_rows(self, df: pd.DataFrame, file_path: str, rows_per_file: int) -> List[str]:
-        """Splits DataFrame by number of rows"""
-        total_rows = len(df)
-        num_files = math.ceil(total_rows / rows_per_file)
-        output_files = []
-        
-        for i in range(num_files):
-            if self.progress:
-                self.update_progress(
-                    (i / num_files) * 100,
-                    f"Creating split {i+1} of {num_files}..."
-                )
-            
-            start_idx = i * rows_per_file
-            end_idx = min((i + 1) * rows_per_file, total_rows)
-            
-            split_df = df.iloc[start_idx:end_idx]
-            
-            # Generate output filename
-            base_path = Path(file_path)
-            output_file = base_path.parent / f"{base_path.stem}_split{i+1}{base_path.suffix}"
-            
-            self.writer.write_csv(split_df, str(output_file))
-            output_files.append(str(output_file))
-        
-        return output_files
-    
-    def _split_by_size(self, df: pd.DataFrame, file_path: str, max_size_mb: int) -> List[str]:
-        """Splits DataFrame by file size"""
-        max_size_bytes = max_size_mb * 1024 * 1024
-        output_files = []
-        
-        # Calculate approximate rows per file based on memory usage
-        memory_usage = df.memory_usage(deep=True).sum()
-        rows_per_file = int((max_size_bytes / memory_usage) * len(df))
-        
-        return self._split_by_rows(df, file_path, rows_per_file) 
+            result['success'] = False
+            result['error'] = str(e)
+            return result 
