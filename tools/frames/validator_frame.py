@@ -2,56 +2,59 @@ import tkinter as tk
 from tkinter import ttk
 from ..base.tool_frame import BaseToolFrame
 from ..processors.validator_processor import ValidatorProcessor
+from ..widgets.config_panel import ConfigPanel
 
 class ValidatorFrame(BaseToolFrame):
-    """Tool for validating data against rules"""
+    """Tool for validating CSV data"""
     
     @classmethod
     def get_tool_name(cls) -> str:
         return "Data Validator"
     
-    def create_tool_specific_widgets(self):
-        # Rules section
-        rules_frame = ttk.LabelFrame(self, text="Validation Rules")
-        rules_frame.pack(fill=tk.X, padx=5, pady=5)
+    def create_widgets(self):
+        # Create configuration panel
+        self.config_panel = ConfigPanel(self, "Validation Settings")
+        self.config_panel.pack(fill=tk.X, padx=5, pady=5)
         
-        # Column selection
-        col_frame = ttk.Frame(rules_frame)
-        col_frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        ttk.Label(col_frame, text="Column:").pack(side=tk.LEFT)
-        self.column_var = tk.StringVar()
-        self.column_combo = ttk.Combobox(
-            col_frame,
-            textvariable=self.column_var,
-            state='readonly'
+        # Add validation rules
+        self.config_panel.add_boolean_option(
+            'check_datatypes',
+            'Check Data Types',
+            default=True
         )
-        self.column_combo.pack(side=tk.LEFT, padx=5)
         
-        # Rule types
-        rules_list = ttk.Frame(rules_frame)
-        rules_list.pack(fill=tk.X, padx=5, pady=2)
+        self.config_panel.add_boolean_option(
+            'check_nulls',
+            'Check for Null Values',
+            default=True
+        )
         
-        self.rule_vars = {}
-        rules = [
-            ("Not Null", "null_check"),
-            ("Unique Values", "unique_check"),
-            ("Data Type", "type_check"),
-            ("Value Range", "range_check"),
-            ("Pattern Match", "pattern_check"),
-            ("Custom Function", "custom_check")
-        ]
+        self.config_panel.add_boolean_option(
+            'check_duplicates',
+            'Check for Duplicates',
+            default=True
+        )
         
-        for label, key in rules:
-            var = tk.BooleanVar()
-            self.rule_vars[key] = var
-            ttk.Checkbutton(
-                rules_list,
-                text=label,
-                variable=var,
-                command=lambda k=key: self._toggle_rule(k)
-            ).pack(anchor=tk.W)
+        self.config_panel.add_boolean_option(
+            'check_ranges',
+            'Check Value Ranges',
+            default=False,
+            callback=self._on_range_check_changed
+        )
         
-        # Rule configuration
-        self.config_frame = ttk.LabelFrame(self, text="Rule Configuration")
-        self.config_frame.pack(fill=tk.X, padx=5, pady=5) 
+        # Range settings
+        self.range_frame = ttk.LabelFrame(self, text="Range Settings")
+        
+        # Results display
+        self.results_frame = ttk.LabelFrame(self, text="Validation Results")
+        self.results_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.results_tree = ttk.Treeview(
+            self.results_frame,
+            columns=('Rule', 'Status', 'Details'),
+            show='headings'
+        )
+        for col in ('Rule', 'Status', 'Details'):
+            self.results_tree.heading(col, text=col)
+        
+        self.results_tree.pack(fill=tk.BOTH, expand=True) 

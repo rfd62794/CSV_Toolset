@@ -1,42 +1,63 @@
+import tkinter as tk
+from tkinter import ttk
+from ..base.tool_frame import BaseToolFrame
+from ..processors.splitter_processor import SplitterProcessor
+from ..widgets.config_panel import ConfigPanel
+
 class SplitterFrame(BaseToolFrame):
-    """Tool for splitting CSV files into smaller files"""
+    """Tool for splitting CSV files"""
     
     @classmethod
     def get_tool_name(cls) -> str:
         return "CSV Splitter"
     
-    def create_tool_specific_widgets(self):
-        # Split options
-        options = ttk.LabelFrame(self, text="Split Options")
-        options.pack(fill=tk.X, padx=5, pady=5)
+    def create_widgets(self):
+        # Create configuration panel
+        self.config_panel = ConfigPanel(self, "Split Settings")
+        self.config_panel.pack(fill=tk.X, padx=5, pady=5)
         
-        # Split type
-        self.split_type = tk.StringVar(value="rows")
-        ttk.Radiobutton(
-            options,
-            text="Split by number of rows",
-            value="rows",
-            variable=self.split_type,
-            command=self._update_options
-        ).pack(anchor=tk.W, padx=5)
+        # Add split type selection
+        self.config_panel.add_choice_option(
+            'split_type',
+            'Split Method',
+            choices=['Row Count', 'Percentage', 'Column Value'],
+            callback=self._on_split_type_changed
+        )
         
-        ttk.Radiobutton(
-            options,
-            text="Split by file size",
-            value="size",
-            variable=self.split_type,
-            command=self._update_options
-        ).pack(anchor=tk.W, padx=5)
+        # Row count options
+        self.config_panel.add_numeric_option(
+            'row_count',
+            'Rows per File',
+            default=1000,
+            min_val=1
+        )
         
-        # Size/rows entry
-        size_frame = ttk.Frame(options)
-        size_frame.pack(fill=tk.X, padx=5, pady=5)
-        self.size_var = tk.StringVar(value="1000")
-        ttk.Entry(
-            size_frame,
-            textvariable=self.size_var,
-            width=10
-        ).pack(side=tk.LEFT)
+        # Percentage options
+        self.config_panel.add_numeric_option(
+            'percentage',
+            'Split Percentage',
+            default=50,
+            min_val=1,
+            max_val=99
+        )
         
-        self.size_label = ttk.Label(size_frame, text="rows")
-        self.size_label.pack(side=tk.LEFT, padx=5) 
+        # Column value options
+        self.config_panel.add_choice_option(
+            'split_column',
+            'Split Column',
+            choices=[],  # Will be populated when file is loaded
+            callback=self._on_column_changed
+        )
+        
+        # Common options
+        self.config_panel.add_boolean_option(
+            'keep_headers',
+            'Include Headers in Each File',
+            default=True
+        )
+        
+        self.config_panel.add_text_option(
+            'output_pattern',
+            'Output Filename Pattern',
+            default='split_{n}'
+        ) 
