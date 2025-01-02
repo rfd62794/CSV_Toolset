@@ -246,6 +246,8 @@ class CSVToolkit(tk.Tk):
         try:
             # Create and show new tool
             tool = self.tool_manager.create_tool(tool_name, self.tool_display)
+            # Make tool_manager accessible to the tool
+            tool.tool_manager = self.tool_manager
             tool.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
             
         except Exception as e:

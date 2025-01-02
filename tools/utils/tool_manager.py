@@ -1,6 +1,8 @@
 from typing import Dict, Type, List
 from ..base.tool_frame import BaseToolFrame
 from ..utils.tool_registry import ToolRegistry
+import json
+from pathlib import Path
 
 class ToolManager:
     """Manages tool registration and creation"""
@@ -44,8 +46,26 @@ class ToolManager:
     
     def get_tool_config(self, tool_name: str) -> dict:
         """Gets tool configuration"""
-        return self.registry.get_tool_config(tool_name)
+        try:
+            config_file = Path("config") / f"{tool_name.lower().replace(' ', '_')}.json"
+            if config_file.exists():
+                with open(config_file) as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load configuration for {tool_name}: {e}")
+        return {}
     
     def save_tool_config(self, tool_name: str, config: dict):
         """Saves tool configuration"""
-        self.registry.save_tool_config(tool_name, config) 
+        try:
+            # Create config directory if it doesn't exist
+            config_dir = Path("config")
+            config_dir.mkdir(exist_ok=True)
+            
+            # Save config to JSON file
+            config_file = config_dir / f"{tool_name.lower().replace(' ', '_')}.json"
+            with open(config_file, 'w') as f:
+                json.dump(config, f, indent=4)
+                
+        except Exception as e:
+            print(f"Warning: Could not save configuration for {tool_name}: {e}") 

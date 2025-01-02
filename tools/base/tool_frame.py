@@ -9,7 +9,18 @@ class BaseToolFrame(ttk.Frame):
         super().__init__(parent)
         self.parent = parent
         self.input_file = None
+        # Get tool_manager from the main application window
+        self.tool_manager = self.get_tool_manager()
         self.create_widgets()
+    
+    def get_tool_manager(self):
+        """Traverses widget hierarchy to find tool_manager"""
+        widget = self
+        while widget:
+            if hasattr(widget, 'tool_manager'):
+                return widget.tool_manager
+            widget = widget.master
+        return None
     
     @classmethod
     def get_tool_name(cls) -> str:
@@ -57,7 +68,10 @@ class BaseToolFrame(ttk.Frame):
         """Saves tool configuration"""
         if hasattr(self, 'config_panel'):
             config = self.config_panel.get_config()
-            self.parent.tool_manager.save_tool_config(
-                self.get_tool_name(),
-                config
-            ) 
+            if self.tool_manager:
+                self.tool_manager.save_tool_config(
+                    self.get_tool_name(),
+                    config
+                )
+            else:
+                print("Warning: No tool_manager found, configuration not saved") 
