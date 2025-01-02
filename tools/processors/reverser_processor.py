@@ -1,96 +1,75 @@
 import pandas as pd
-from typing import List, Tuple, Dict, Any
+from typing import Dict, Any
+from pathlib import Path
 from ..base.base_processor import BaseProcessor
 
 class ReverserProcessor(BaseProcessor):
-    """Processor for reversing row order in CSV files"""
+    """Processor for reversing CSV data"""
     
-    def __init__(self):
-        super().__init__()
-        self.reader = self.get_reader()
+    def reverse_rows(self, df: pd.DataFrame, keep_header: bool = True) -> pd.DataFrame:
+        """Reverses row order"""
+        if keep_header:
+            header = df.iloc[0]
+            df = df.iloc[1:].iloc[::-1]
+            df = pd.concat([pd.DataFrame([header]), df])
+        else:
+            df = df.iloc[::-1]
+        return df
     
-    def validate_file(self, df: pd.DataFrame) -> Tuple[bool, str]:
-        """Validates input data"""
-        if df.empty:
-            return False, "File contains no data"
-        
-        if len(df) == 1:
-            return False, "File contains only one row, nothing to reverse"
-        
-        file_size = df.memory_usage(deep=True).sum()
-        max_size = self.config.REVERSER_SETTINGS['max_file_size']
-        
-        if file_size > max_size:
-            size_mb = max_size / (1024 * 1024)
-            return False, f"File too large. Maximum size is {size_mb:.0f}MB"
-        
-        return True, ""
+    def reverse_columns(self, df: pd.DataFrame, keep_index: bool = False) -> pd.DataFrame:
+        """Reverses column order"""
+        if keep_index:
+            index_col = df.index
+            df = df.iloc[:, ::-1]
+            df.index = index_col
+        else:
+            df = df.iloc[:, ::-1]
+        return df
     
-    def _process_data(self, df: pd.DataFrame, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        Reverses the order of rows in DataFrame
+    def preview_reverse(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Creates a preview of the reversed data"""
+        # Get a sample of the data
+        preview_df = df.head(5).copy()
         
-        Args:
-            df: Input DataFrame
-            **options:
-                keep_header: bool - Whether to keep header row at top
-        """
-        # Validate input
-        valid, error = self.validate_file(df)
-        if not valid:
-            raise ValueError(error)
+        # Apply reversing based on configuration
+        reverse_type = config.get('reverse_type', 'Rows')
+        keep_header = config.get('keep_header', True)
+        keep_index = config.get('keep_index', False)
         
-        keep_header = options.get('keep_header', True)
-        total_rows = len(df)
-        
-        if self.progress:
-            self.update_progress(20, f"Processing {total_rows:,} rows...")
-        
+        if reverse_type in ['Rows', 'Both']:
+            preview_df = self.reverse_rows(preview_df, keep_header)
+            
+        if reverse_type in ['Columns', 'Both']:
+            preview_df = self.reverse_columns(preview_df, keep_index)
+            
+        return preview_df
+    
+    def process_file(self, df: pd.DataFrame, config: dict) -> Dict[str, Any]:
+        """Processes the input file according to configuration"""
         try:
-            if keep_header and total_rows > 1:
-                # Keep header row and reverse the rest
-                header = df.iloc[:1]
-                body = df.iloc[1:].iloc[::-1]
-                result = pd.concat([header, body])
-            else:
-                # Reverse all rows
-                result = df.iloc[::-1]
+            reverse_type = config.get('reverse_type', 'Rows')
+            keep_header = config.get('keep_header', True)
+            keep_index = config.get('keep_index', False)
             
-            if self.progress:
-                self.update_progress(80, "Finalizing...")
+            if reverse_type in ['Rows', 'Both']:
+                df = self.reverse_rows(df, keep_header)
+                
+            if reverse_type in ['Columns', 'Both']:
+                df = self.reverse_columns(df, keep_index)
             
-            return result, {
-                'total_rows': total_rows,
-                'keep_header': keep_header
+            # Save processed file
+            output_file = str(Path(self.input_file).with_stem(f"{Path(self.input_file).stem}_reversed"))
+            df.to_csv(output_file, index=False)
+            
+            return {
+                'success': True,
+                'output_file': output_file,
+                'error': None
             }
             
         except Exception as e:
-            raise RuntimeError(f"Error reversing rows: {str(e)}")
-    
-    def process_file(self, input_file: str, keep_header: bool = True, progress_callback: Any = None) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        Reverses row order in CSV file
-        
-        Args:
-            input_file: Path to input CSV file
-            keep_header: Whether to keep header row at top
-            progress_callback: Optional progress callback function
-            
-        Returns:
-            Tuple[pd.DataFrame, Dict]: (processed_dataframe, statistics)
-        """
-        self.set_progress_callback(progress_callback)
-        
-        try:
-            # Read data
-            self.update_progress(0, "Reading file...")
-            df = self.reader.read_csv(input_file)
-            
-            # Process data
-            self.update_progress(50, "Reversing rows...")
-            result_df, stats = self._process_data(df, keep_header=keep_header)
-            
-            return result_df, stats
-            
-        except Exception as e:
-            raise RuntimeError(f"Error processing file: {str(e)}") 
+            return {
+                'success': False,
+                'output_file': None,
+                'error': str(e)
+            } 
