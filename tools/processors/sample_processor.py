@@ -242,3 +242,35 @@ class SampleProcessor(BaseProcessor):
                 'sample_pct': f"{sample_props.get(group, 0)*100:.1f}%"
             }
         return stats 
+    
+    def preview_sample(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Creates a preview of the sample"""
+        try:
+            # Get configuration values
+            sample_type = config.get('sample_type', 'Random')
+            sample_size = int(config.get('sample_size', 5))  # Use smaller size for preview
+            strat_column = config.get('strat_column')
+            
+            # Limit preview sample size
+            preview_size = min(sample_size, 5)  # Show at most 5 rows in preview
+            
+            if sample_type == 'Random':
+                preview = df.sample(n=preview_size)
+            elif sample_type == 'Systematic':
+                step = len(df) // preview_size
+                preview = df.iloc[::step].head(preview_size)
+            elif sample_type == 'Stratified' and strat_column:
+                # Get proportional samples from each stratum
+                groups = df.groupby(strat_column)
+                proportions = groups.size() / len(df)
+                preview = pd.concat([
+                    group.sample(n=max(1, int(preview_size * prop)))
+                    for prop, (_, group) in zip(proportions, groups)
+                ]).head(preview_size)
+            else:
+                preview = df.head(preview_size)
+                
+            return preview.copy()
+            
+        except Exception as e:
+            raise ValueError(f"Error creating preview: {str(e)}") 
