@@ -42,3 +42,53 @@ class TransformerFrame(BaseToolFrame):
                 text=trans,
                 variable=var
             ).pack(anchor=tk.W, padx=5) 
+        
+        # Add configuration panel
+        self.config_panel = ConfigPanel(self, "Transform Settings")
+        self.config_panel.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Add configuration options
+        self.config_panel.add_boolean_option(
+            'preserve_original', 
+            'Preserve original column',
+            default=True,
+            callback=self._on_preserve_changed
+        )
+        
+        self.config_panel.add_choice_option(
+            'null_handling',
+            'Null Value Handling',
+            choices=['Skip', 'Keep', 'Replace'],
+            callback=self._on_null_handling_changed
+        )
+        
+        self.config_panel.add_text_option(
+            'null_replacement',
+            'Null Replacement Value',
+            default='',
+            callback=self._on_replacement_changed
+        )
+        
+        # Load saved configuration
+        saved_config = self.parent.tool_manager.get_tool_config(self.get_tool_name())
+        if saved_config:
+            self.config_panel.set_config(saved_config)
+
+    def get_config(self) -> dict:
+        """Gets current tool configuration"""
+        return self.config_panel.get_config()
+
+    def _on_preserve_changed(self, value: bool):
+        """Handles preserve original column option change"""
+        # Implementation...
+        self.save_config()
+
+    def _on_null_handling_changed(self, value: str):
+        """Handles null handling option change"""
+        # Implementation...
+        self.save_config()
+
+    def _on_replacement_changed(self, value: str):
+        """Handles null replacement value change"""
+        # Implementation...
+        self.save_config() 

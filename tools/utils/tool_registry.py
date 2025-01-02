@@ -15,6 +15,12 @@ class ToolRegistry:
         "Data Export": "Tools for exporting to different formats",
         "Data Import": "Tools for importing from different sources",
         "Data Visualization": "Tools for visualizing data",
+        "Text Processing": "Tools for text manipulation",
+        "Statistical Analysis": "Tools for statistical calculations",
+        "Data Quality": "Tools for assessing data quality",
+        "Data Integration": "Tools for combining data sources",
+        "Data Extraction": "Tools for extracting specific data",
+        "Data Formatting": "Tools for formatting data",
         "Utilities": "General utility tools"
     }
     
