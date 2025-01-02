@@ -7,20 +7,20 @@ class ToolRegistry:
     """Registry for available tools"""
     
     CATEGORIES = {
-        "Analysis": "Tools for analyzing CSV data",
-        "Data Cleaning": "Tools for cleaning and validating data",
-        "Data Manipulation": "Tools for manipulating data structure",
-        "Data Transformation": "Tools for transforming data content",
+        "Analysis": "Tools for analyzing CSV data structure and content",
+        "Data Cleaning": "Tools for cleaning and standardizing data",
+        "Data Manipulation": "Tools for modifying data structure and content",
+        "Data Transformation": "Tools for transforming data values",
         "Data Validation": "Tools for validating data quality",
         "Data Export": "Tools for exporting to different formats",
         "Data Import": "Tools for importing from different sources",
-        "Data Visualization": "Tools for visualizing data",
-        "Text Processing": "Tools for text manipulation",
+        "Data Visualization": "Tools for visualizing data patterns",
+        "Text Processing": "Tools for text manipulation and formatting",
         "Statistical Analysis": "Tools for statistical calculations",
         "Data Quality": "Tools for assessing data quality",
         "Data Integration": "Tools for combining data sources",
         "Data Extraction": "Tools for extracting specific data",
-        "Data Formatting": "Tools for formatting data",
+        "Data Formatting": "Tools for formatting CSV files",
         "Utilities": "General utility tools"
     }
     

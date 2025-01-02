@@ -76,10 +76,24 @@ class CSVToolkit(tk.Tk):
         
         # Add tool categories
         self.category_frames = {}
-        for category, tools in self.tool_manager.get_categories().items():
+        categories = self.tool_manager.get_categories()
+        
+        for category, tools in categories.items():
+            # Create frame for category
             frame = ttk.Frame(self.tool_notebook)
             self.tool_notebook.add(frame, text=category)
             
+            # Add description label
+            desc = self.tool_manager.get_category_description(category)
+            if desc:
+                ttk.Label(
+                    frame,
+                    text=desc,
+                    wraplength=200,
+                    justify=tk.LEFT
+                ).pack(padx=5, pady=2, fill=tk.X)
+            
+            # Add tool buttons
             for tool_name in tools:
                 btn = ttk.Button(
                     frame,

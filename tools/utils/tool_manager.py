@@ -21,12 +21,7 @@ class ToolManager:
             raise ValueError(error)
         
         # Find tool class
-        tool_class = None
-        for t in self.registry.get_tools():
-            if t.get_tool_name() == tool_name:
-                tool_class = t
-                break
-        
+        tool_class = self.registry.get_tool_class(tool_name)
         if not tool_class:
             raise ValueError(f"Tool not found: {tool_name}")
         
@@ -34,12 +29,18 @@ class ToolManager:
         return tool_class(parent)
     
     def get_categories(self) -> Dict[str, List[str]]:
-        """Gets tool categories"""
+        """Gets tool categories and their tools"""
         categories = {}
         for category in self.registry.CATEGORIES:
             tools = self.registry.get_tools(category)
-            categories[category] = [t.get_tool_name() for t in tools]
+            tool_names = [t.get_tool_name() for t in tools]
+            if tool_names:  # Only include categories with tools
+                categories[category] = tool_names
         return categories
+    
+    def get_category_description(self, category: str) -> str:
+        """Gets category description"""
+        return self.registry.CATEGORIES.get(category, "")
     
     def get_tool_config(self, tool_name: str) -> dict:
         """Gets tool configuration"""
