@@ -169,12 +169,21 @@ class SampleProcessor(BaseProcessor):
             if self.progress:
                 self.update_progress(80, "Finalizing sample...")
             
-            return sample, {
+            # Update stats dictionary to include group stats
+            stats = {
                 'total_rows': total_rows,
                 'sampled_rows': len(sample),
                 'method': method,
                 'sampling_rate': f"{(len(sample) / total_rows * 100):.1f}%"
             }
+            
+            if method == 'stratified':
+                stats['group_stats'] = {
+                    str(group): len(group_df)
+                    for group, group_df in sample.groupby(strat_column)
+                }
+            
+            return sample, stats
             
         except Exception as e:
             raise RuntimeError(f"Error creating sample: {str(e)}") 
