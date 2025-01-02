@@ -70,43 +70,103 @@ class CSVToolkit(tk.Tk):
         self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
         self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         
+        # Category descriptions and icons
+        self.categories = {
+            "Analysis": {
+                "desc": "Tools for analyzing and understanding CSV data structure and content",
+                "icon": "📊",  # We can replace these with actual icon files later
+                "tools": {
+                    "CSV Inspector": "Examine CSV file structure and contents",
+                    "Data Profiler": "Generate statistical profiles of your data"
+                }
+            },
+            "Data Cleaning": {
+                "desc": "Tools for cleaning and standardizing data",
+                "icon": "🧹",
+                "tools": {
+                    "Column Sweeper": "Clean and standardize column data",
+                    "Phone Extractor": "Extract and format phone numbers",
+                    "Data Validator": "Validate data quality and consistency"
+                }
+            },
+            "Data Manipulation": {
+                "desc": "Tools for modifying and transforming data",
+                "icon": "🔧",
+                "tools": {
+                    "Sample Maker": "Create data samples",
+                    "Order Reverser": "Reverse row order",
+                    "Column Appender": "Add columns to CSV files",
+                    "CSV Merger": "Combine multiple CSV files",
+                    "CSV Splitter": "Split CSV into multiple files",
+                    "Data Transformer": "Transform column values",
+                    "Data Filter": "Filter rows based on conditions",
+                    "Column Manager": "Manage and organize columns"
+                }
+            },
+            "Data Formatting": {
+                "desc": "Tools for formatting and exporting data",
+                "icon": "📝",
+                "tools": {
+                    "Data Reformatter": "Reformat CSV files with different options"
+                }
+            }
+        }
+        
+        # Add search frame
+        self.search_frame = ttk.Frame(self.tool_frame)
+        self.search_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.search_var = tk.StringVar()
+        self.search_var.trace('w', self._filter_tools)
+        
+        ttk.Label(self.search_frame, text="Search:").pack(side=tk.LEFT)
+        self.search_entry = ttk.Entry(
+            self.search_frame,
+            textvariable=self.search_var
+        )
+        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        
         # Create notebook for categories
         self.category_notebook = ttk.Notebook(self.tool_frame)
         self.category_notebook.pack(fill=tk.BOTH, expand=True)
         
         # Create category tabs
         self.category_frames = {}
-        categories = {
-            "Analysis": ["CSV Inspector", "Data Profiler"],
-            "Data Cleaning": ["Column Sweeper", "Phone Extractor", "Data Validator"],
-            "Data Manipulation": [
-                "Sample Maker",
-                "Order Reverser",
-                "Column Appender",
-                "CSV Merger",
-                "CSV Splitter",
-                "Data Transformer",
-                "Data Filter",
-                "Column Manager"
-            ],
-            "Data Formatting": ["Data Reformatter"]
-        }
+        self.tool_buttons = {}  # Store buttons for search filtering
         
-        # Create tabs and buttons for each category
-        for category, tools in categories.items():
+        for category, info in self.categories.items():
             # Create frame for this category
             category_frame = ttk.Frame(self.category_notebook)
-            self.category_notebook.add(category_frame, text=category)
             
-            # Add tool buttons to this category
-            for tool_name in tools:
+            # Add category description
+            desc_label = ttk.Label(
+                category_frame,
+                text=f"{info['icon']} {info['desc']}",
+                wraplength=200,
+                justify=tk.LEFT
+            )
+            desc_label.pack(fill=tk.X, padx=5, pady=5)
+            
+            # Add tool buttons
+            for tool_name, tooltip in info['tools'].items():
                 btn = ttk.Button(
                     category_frame,
                     text=tool_name,
                     command=lambda t=tool_name: self.show_tool(t)
                 )
                 btn.pack(padx=5, pady=2, fill=tk.X)
+                
+                # Add tooltip
+                self._create_tooltip(btn, tooltip)
+                
+                # Store button for search
+                self.tool_buttons[tool_name] = {
+                    'button': btn,
+                    'category': category,
+                    'tooltip': tooltip
+                }
             
+            self.category_notebook.add(category_frame, text=f"{info['icon']} {category}")
             self.category_frames[category] = category_frame
         
         # Create tool display area
@@ -287,6 +347,52 @@ class CSVToolkit(tk.Tk):
         self.test_results.clear()
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
+
+    def _create_tooltip(self, widget, text):
+        """Creates a tooltip for a widget"""
+        widget.bind('<Enter>', lambda e: self._show_tooltip(e, text))
+        widget.bind('<Leave>', lambda e: self._hide_tooltip())
+
+    def _show_tooltip(self, event, text):
+        """Shows tooltip"""
+        x, y, _, _ = event.widget.bbox("insert")
+        x += event.widget.winfo_rootx() + 25
+        y += event.widget.winfo_rooty() + 20
+        
+        # Creates a toplevel window
+        self.tooltip = tk.Toplevel(self)
+        self.tooltip.wm_overrideredirect(True)
+        self.tooltip.wm_geometry(f"+{x}+{y}")
+        
+        label = ttk.Label(
+            self.tooltip,
+            text=text,
+            justify=tk.LEFT,
+            background="#ffffe0",
+            relief='solid',
+            borderwidth=1
+        )
+        label.pack()
+
+    def _hide_tooltip(self):
+        """Hides tooltip"""
+        if hasattr(self, 'tooltip'):
+            self.tooltip.destroy()
+
+    def _filter_tools(self, *args):
+        """Filters tools based on search text"""
+        search_text = self.search_var.get().lower()
+        
+        for tool_name, info in self.tool_buttons.items():
+            button = info['button']
+            tooltip = info['tooltip']
+            
+            # Check if search matches tool name or tooltip
+            if (search_text in tool_name.lower() or 
+                search_text in tooltip.lower()):
+                button.pack(padx=5, pady=2, fill=tk.X)
+            else:
+                button.pack_forget()
 
 if __name__ == "__main__":
     app = CSVToolkit()
