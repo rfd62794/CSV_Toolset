@@ -68,8 +68,9 @@ class InspectorFrame(BaseToolFrame):
     
     def _on_file_selected(self, file_path: str):
         """Handles file selection"""
+        self.input_file = file_path  # Set input_file before calling parent
         super()._on_file_selected(file_path)
-        self.update_preview()
+        self.update_preview()  # Update preview after file selection
     
     def update_preview(self):
         """Updates the inspection results"""

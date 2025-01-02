@@ -7,34 +7,41 @@ class InspectorProcessor(BaseProcessor):
     
     def inspect_data(self, df: pd.DataFrame, config: dict) -> Dict[str, Dict[str, Any]]:
         """Inspects dataframe and returns analysis results"""
-        results = {}
+        if df is None or df.empty:
+            raise ValueError("No data to inspect")
         
-        # Basic info
-        results['Basic Info'] = {
-            'Rows': len(df),
-            'Columns': len(df.columns),
-            'Memory Usage': f"{df.memory_usage(deep=True).sum() / 1024:.2f} KB"
-        }
-        
-        # Data types
-        if config.get('show_datatypes', True):
-            results['Data Types'] = {
-                col: str(dtype) for col, dtype in df.dtypes.items()
+        try:
+            results = {}
+            
+            # Basic info
+            results['Basic Info'] = {
+                'Rows': len(df),
+                'Columns': len(df.columns),
+                'Memory Usage': f"{df.memory_usage(deep=True).sum() / 1024:.2f} KB"
             }
-        
-        # Null counts
-        if config.get('show_nulls', True):
-            results['Null Counts'] = {
-                col: str(df[col].isna().sum()) for col in df.columns
-            }
-        
-        # Unique values
-        if config.get('show_unique', True):
-            results['Unique Values'] = {
-                col: str(df[col].nunique()) for col in df.columns
-            }
-        
-        return results
+            
+            # Data types
+            if config.get('show_datatypes', True):
+                results['Data Types'] = {
+                    col: str(dtype) for col, dtype in df.dtypes.items()
+                }
+            
+            # Null counts
+            if config.get('show_nulls', True):
+                results['Null Counts'] = {
+                    col: str(df[col].isna().sum()) for col in df.columns
+                }
+            
+            # Unique values
+            if config.get('show_unique', True):
+                results['Unique Values'] = {
+                    col: str(df[col].nunique()) for col in df.columns
+                }
+            
+            return results
+            
+        except Exception as e:
+            raise ValueError(f"Error inspecting data: {str(e)}")
     
     def _process_data(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
         """Required implementation of abstract method"""
