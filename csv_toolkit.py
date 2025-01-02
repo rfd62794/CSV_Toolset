@@ -59,6 +59,29 @@ class CSVToolkit(tk.Tk):
         
         # Data formatting tools
         self.tool_manager.register_tool(ReformatterFrame, "Data Formatting")
+        
+        # Update tool buttons after registration
+        self._update_tool_buttons()
+    
+    def _update_tool_buttons(self):
+        """Updates tool buttons based on registered tools"""
+        categories = self.tool_manager.get_categories()
+        for category, tools in categories.items():
+            if category in self.category_frames:
+                frame = self.category_frames[category]
+                for tool_name in tools:
+                    if tool_name not in self.tool_buttons:
+                        btn = ttk.Button(
+                            frame,
+                            text=tool_name,
+                            command=lambda t=tool_name: self.show_tool(t)
+                        )
+                        btn.pack(padx=5, pady=2, fill=tk.X)
+                        self.tool_buttons[tool_name] = {
+                            'button': btn,
+                            'category': category,
+                            'tooltip': self.categories[category]['tools'].get(tool_name, '')
+                        }
     
     def create_widgets(self):
         """Creates main application widgets"""

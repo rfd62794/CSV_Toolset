@@ -29,6 +29,28 @@ class BaseToolFrame(ttk.Frame):
     
     def create_widgets(self):
         """Creates the tool's widgets"""
+        # Add file selector
+        self.file_selector = FileSelector(
+            self,
+            label_text="Input File",
+            multiple=False
+        )
+        self.file_selector.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Add file change callback
+        self.file_selector.on_file_selected = self._on_file_selected
+        
+        # Create tool-specific widgets
+        self.create_tool_widgets()
+
+    def _on_file_selected(self, file_path: str):
+        """Handles file selection"""
+        self.input_file = file_path
+        if hasattr(self, 'update_preview'):
+            self.update_preview()
+
+    def create_tool_widgets(self):
+        """Creates tool-specific widgets - to be overridden by subclasses"""
         raise NotImplementedError
     
     def read_input_file(self) -> pd.DataFrame:

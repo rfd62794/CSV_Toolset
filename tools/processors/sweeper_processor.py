@@ -1,4 +1,5 @@
 from .base_processor import BaseProcessor
+import pandas as pd
 
 class SweeperProcessor(BaseProcessor):
     def __init__(self):
@@ -45,3 +46,31 @@ class SweeperProcessor(BaseProcessor):
         }
         
         return df_clean, stats 
+    
+    def preview_clean(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Creates a preview of the cleaning operations"""
+        try:
+            # Get a sample of the data
+            preview_df = df.head(5).copy()
+            
+            # Apply cleaning operations
+            if config.get('trim_whitespace'):
+                preview_df = preview_df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+                
+            if config.get('remove_duplicates'):
+                preview_df = preview_df.drop_duplicates()
+                
+            if config.get('drop_empty'):
+                preview_df = preview_df.dropna(axis=1, how='all')
+                
+            null_handling = config.get('null_handling', 'Keep')
+            if null_handling == 'Drop':
+                preview_df = preview_df.dropna()
+            elif null_handling == 'Fill':
+                fill_value = config.get('fill_value', '')
+                preview_df = preview_df.fillna(fill_value)
+                
+            return preview_df
+            
+        except Exception as e:
+            raise ValueError(f"Preview error: {str(e)}") 

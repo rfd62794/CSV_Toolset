@@ -73,3 +73,17 @@ class ReverserProcessor(BaseProcessor):
                 'output_file': None,
                 'error': str(e)
             } 
+    
+    def _process_data(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Processes the dataframe according to configuration"""
+        reverse_type = config.get('reverse_type', 'Rows')
+        keep_header = config.get('keep_header', True)
+        keep_index = config.get('keep_index', False)
+        
+        if reverse_type in ['Rows', 'Both']:
+            df = self.reverse_rows(df, keep_header)
+            
+        if reverse_type in ['Columns', 'Both']:
+            df = self.reverse_columns(df, keep_index)
+            
+        return df 
