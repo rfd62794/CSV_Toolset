@@ -59,9 +59,6 @@ class CSVToolkit(tk.Tk):
         
         # Data formatting tools
         self.tool_manager.register_tool(ReformatterFrame, "Data Formatting")
-        
-        # Update tool buttons after registration
-        self._update_tool_buttons()
     
     def _update_tool_buttons(self):
         """Updates tool buttons based on registered tools"""
@@ -182,7 +179,7 @@ class CSVToolkit(tk.Tk):
         # Show welcome message
         self.show_welcome()
         
-        # Update tool buttons after creating frames
+        # Now that category frames exist, update tool buttons
         self._update_tool_buttons()
         
         # Create toolbar
