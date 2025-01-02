@@ -42,6 +42,20 @@ class ToolConfig:
         'max_file_size': 1024 * 1024 * 100  # 100MB limit
     }
     
+    # Sample-specific settings
+    SAMPLE_SETTINGS = {
+        'preview_rows': 5,
+        'min_sample_size': 1,
+        'max_sample_size': 1000000,  # 1M rows max
+        'max_file_size': 1024 * 1024 * 200,  # 200MB limit
+        'default_sample_size': 100,
+        'sampling_methods': [
+            ('Sequential (first N rows)', 'sequential'),
+            ('Random sampling', 'random'),
+            ('Stratified sampling', 'stratified')
+        ]
+    }
+    
     @staticmethod
     def get_output_dir() -> Path:
         """Gets output directory path"""
