@@ -4,11 +4,10 @@ from functools import partial
 from tools.frames import (
     InspectorFrame,
     SweeperFrame,
+    PhoneFrame,
+    SampleFrame,
     ReverserFrame,
-    SamplerFrame,
-    PhoneExtractorFrame,
-    ColumnAppenderFrame,
-    ReformatterFrame
+    AppenderFrame
 )
 
 class CSVToolkitWindow(tk.Tk):
@@ -23,9 +22,9 @@ class CSVToolkitWindow(tk.Tk):
             "CSV Inspector": InspectorFrame,
             "Column Sweeper": SweeperFrame,
             "Order Reverser": ReverserFrame,
-            "Sample Maker": SamplerFrame,
-            "Phone Extractor": PhoneExtractorFrame,
-            "Column Appender": ColumnAppenderFrame,
+            "Sample Maker": SampleFrame,
+            "Phone Extractor": PhoneFrame,
+            "Column Appender": AppenderFrame,
             "Data Reformatter": ReformatterFrame
         }
         
