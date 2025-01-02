@@ -3,103 +3,137 @@ from tkinter import ttk
 from typing import Dict, Any, Callable
 
 class ConfigPanel(ttk.LabelFrame):
-    """Reusable configuration panel widget"""
+    """Panel for tool configuration options"""
     
-    def __init__(self, parent, title="Configuration", **kwargs):
-        super().__init__(parent, text=title, **kwargs)
-        self.config_vars = {}
-        self.callbacks = {}
-        
-    def add_text_option(self, key: str, label: str, default: str = "", 
-                       callback: Callable = None) -> tk.StringVar:
-        """Adds a text configuration option"""
+    def __init__(self, parent, title="Configuration"):
+        super().__init__(parent, text=title)
+        self.options = {}
+        self.variables = {}
+        self.frames = {}
+    
+    def add_choice_option(self, name: str, label: str, choices: list, callback=None):
+        """Adds a dropdown selection option"""
         frame = ttk.Frame(self)
         frame.pack(fill=tk.X, padx=5, pady=2)
         
         ttk.Label(frame, text=label).pack(side=tk.LEFT)
-        var = tk.StringVar(value=default)
         
+        var = tk.StringVar(value=choices[0] if choices else '')
         if callback:
             var.trace_add('write', lambda *args: callback(var.get()))
-            self.callbacks[key] = callback
-            
-        self.config_vars[key] = var
-        ttk.Entry(frame, textvariable=var).pack(side=tk.RIGHT, expand=True, fill=tk.X)
-        return var
         
-    def add_boolean_option(self, key: str, label: str, default: bool = False,
-                          callback: Callable = None) -> tk.BooleanVar:
-        """Adds a boolean configuration option"""
+        dropdown = ttk.Combobox(
+            frame,
+            textvariable=var,
+            values=choices,
+            state='readonly'
+        )
+        dropdown.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+        
+        self.options[name] = dropdown
+        self.variables[name] = var
+        self.frames[name] = frame
+    
+    def add_numeric_option(self, name: str, label: str, default=0, min_val=None, max_val=None, callback=None):
+        """Adds a numeric entry option"""
+        frame = ttk.Frame(self)
+        frame.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Label(frame, text=label).pack(side=tk.LEFT)
+        
+        var = tk.IntVar(value=default)
+        if callback:
+            var.trace_add('write', lambda *args: callback(var.get()))
+        
+        vcmd = (self.register(lambda P: self._validate_number(P, min_val, max_val)), '%P')
+        entry = ttk.Entry(
+            frame,
+            textvariable=var,
+            validate='key',
+            validatecommand=vcmd
+        )
+        entry.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+        
+        self.options[name] = entry
+        self.variables[name] = var
+        self.frames[name] = frame
+    
+    def add_boolean_option(self, name: str, label: str, default=False, callback=None):
+        """Adds a checkbox option"""
+        frame = ttk.Frame(self)
+        frame.pack(fill=tk.X, padx=5, pady=2)
+        
         var = tk.BooleanVar(value=default)
-        
         if callback:
             var.trace_add('write', lambda *args: callback(var.get()))
-            self.callbacks[key] = callback
-            
-        self.config_vars[key] = var
-        ttk.Checkbutton(
-            self, text=label, variable=var
-        ).pack(anchor=tk.W, padx=5, pady=2)
-        return var
         
-    def add_choice_option(self, key: str, label: str, choices: list, 
-                         default: str = None, callback: Callable = None) -> tk.StringVar:
-        """Adds a choice configuration option"""
+        checkbox = ttk.Checkbutton(
+            frame,
+            text=label,
+            variable=var
+        )
+        checkbox.pack(fill=tk.X)
+        
+        self.options[name] = checkbox
+        self.variables[name] = var
+        self.frames[name] = frame
+    
+    def add_text_option(self, name: str, label: str, default="", callback=None):
+        """Adds a text entry option"""
         frame = ttk.Frame(self)
         frame.pack(fill=tk.X, padx=5, pady=2)
         
         ttk.Label(frame, text=label).pack(side=tk.LEFT)
-        var = tk.StringVar(value=default or choices[0])
         
+        var = tk.StringVar(value=default)
         if callback:
             var.trace_add('write', lambda *args: callback(var.get()))
-            self.callbacks[key] = callback
-            
-        self.config_vars[key] = var
-        ttk.OptionMenu(frame, var, var.get(), *choices).pack(side=tk.RIGHT)
-        return var
         
-    def add_numeric_option(self, key: str, label: str, default: float = 0,
-                          min_val: float = None, max_val: float = None,
-                          callback: Callable = None) -> tk.DoubleVar:
-        """Adds a numeric configuration option"""
-        frame = ttk.Frame(self)
-        frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        ttk.Label(frame, text=label).pack(side=tk.LEFT)
-        var = tk.DoubleVar(value=default)
-        
-        if callback:
-            var.trace_add('write', lambda *args: callback(var.get()))
-            self.callbacks[key] = callback
-            
-        self.config_vars[key] = var
-        spinbox = ttk.Spinbox(
-            frame, 
-            from_=min_val if min_val is not None else float('-inf'),
-            to=max_val if max_val is not None else float('inf'),
+        entry = ttk.Entry(
+            frame,
             textvariable=var
         )
-        spinbox.pack(side=tk.RIGHT)
-        return var
+        entry.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+        
+        self.options[name] = entry
+        self.variables[name] = var
+        self.frames[name] = frame
     
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self) -> dict:
         """Gets current configuration values"""
         return {
-            key: var.get()
-            for key, var in self.config_vars.items()
+            name: var.get()
+            for name, var in self.variables.items()
         }
     
-    def set_config(self, config: Dict[str, Any]):
-        """Sets configuration values"""
-        for key, value in config.items():
-            if key in self.config_vars:
-                self.config_vars[key].set(value)
-                if key in self.callbacks:
-                    self.callbacks[key](value)
+    def update_choices(self, name: str, choices: list):
+        """Updates choices for a dropdown option"""
+        if name in self.options:
+            self.options[name]['values'] = choices
+            if choices:
+                self.variables[name].set(choices[0])
     
-    def add_separator(self):
-        """Adds a separator line"""
-        ttk.Separator(self, orient='horizontal').pack(
-            fill=tk.X, padx=5, pady=5
-        ) 
+    def hide_option(self, name: str):
+        """Hides a configuration option"""
+        if name in self.frames:
+            self.frames[name].pack_forget()
+    
+    def show_option(self, name: str):
+        """Shows a configuration option"""
+        if name in self.frames:
+            self.frames[name].pack(fill=tk.X, padx=5, pady=2)
+    
+    def _validate_number(self, value: str, min_val=None, max_val=None) -> bool:
+        """Validates numeric input"""
+        if value == "":
+            return True
+            
+        try:
+            num = int(value)
+            if min_val is not None and num < min_val:
+                return False
+            if max_val is not None and num > max_val:
+                return False
+            return True
+        except ValueError:
+            return False 
