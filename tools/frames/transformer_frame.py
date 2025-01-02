@@ -62,3 +62,50 @@ class TransformerFrame(BaseToolFrame):
         self.preview_tree.heading('Original', text='Original Value')
         self.preview_tree.heading('Transformed', text='Transformed Value')
         self.preview_tree.pack(fill=tk.BOTH, expand=True) 
+
+    def _on_column_changed(self, value: str):
+        """Handles column selection change"""
+        self.update_preview()
+        self.save_config()
+
+    def _on_transform_changed(self, value: bool):
+        """Handles transformation option change"""
+        self.update_preview()
+        self.save_config()
+
+    def _on_regex_changed(self, value: str):
+        """Handles custom regex pattern change"""
+        self.update_preview()
+        self.save_config()
+
+    def update_preview(self):
+        """Updates the transform preview"""
+        try:
+            if not hasattr(self, 'processor'):
+                self.processor = TransformerProcessor()
+            
+            df = self.read_input_file()
+            if df is None:
+                return
+            
+            column = self.config_panel.get_config().get('column')
+            if not column:
+                return
+            
+            # Clear preview
+            for item in self.preview_tree.get_children():
+                self.preview_tree.delete(item)
+            
+            # Get sample values
+            sample = df[column].head(5)
+            transformed = self.processor.transform_sample(
+                sample,
+                self.config_panel.get_config()
+            )
+            
+            # Update preview
+            for orig, trans in zip(sample, transformed):
+                self.preview_tree.insert('', tk.END, values=(orig, trans))
+            
+        except Exception as e:
+            self.show_error(f"Preview error: {str(e)}") 

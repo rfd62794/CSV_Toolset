@@ -61,3 +61,24 @@ class SplitterFrame(BaseToolFrame):
             'Output Filename Pattern',
             default='split_{n}'
         ) 
+
+    def _on_split_type_changed(self, value: str):
+        """Handles split type change"""
+        # Show/hide relevant options based on split type
+        if value == 'Row Count':
+            self.config_panel.show_option('row_count')
+            self.config_panel.hide_option('percentage')
+            self.config_panel.hide_option('split_column')
+        elif value == 'Percentage':
+            self.config_panel.hide_option('row_count')
+            self.config_panel.show_option('percentage')
+            self.config_panel.hide_option('split_column')
+        else:  # Column Value
+            self.config_panel.hide_option('row_count')
+            self.config_panel.hide_option('percentage')
+            self.config_panel.show_option('split_column')
+        self.save_config()
+
+    def _on_column_changed(self, value: str):
+        """Handles column selection change"""
+        self.save_config() 

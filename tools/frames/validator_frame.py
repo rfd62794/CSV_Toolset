@@ -58,3 +58,23 @@ class ValidatorFrame(BaseToolFrame):
             self.results_tree.heading(col, text=col)
         
         self.results_tree.pack(fill=tk.BOTH, expand=True) 
+
+    def _on_range_check_changed(self, value: bool):
+        """Handles range check option change"""
+        if value:
+            self.range_frame.pack(fill=tk.X, padx=5, pady=5)
+        else:
+            self.range_frame.pack_forget()
+        self.save_config()
+
+    def update_results(self, validation_results: dict):
+        """Updates the validation results display"""
+        # Clear previous results
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+        
+        # Add new results
+        for rule, result in validation_results.items():
+            status = "✓ Pass" if result['passed'] else "❌ Fail"
+            details = result.get('details', '')
+            self.results_tree.insert('', tk.END, values=(rule, status, details)) 
