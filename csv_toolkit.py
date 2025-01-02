@@ -108,7 +108,7 @@ class CSVToolkit(tk.Tk):
                 "icon": "🧹",
                 "tools": {
                     "Column Sweeper": "Clean and standardize column data",
-                    "Phone Extractor": "Extract and format phone numbers",
+                    "Phone Formatter": "Format and validate phone numbers",
                     "Data Validator": "Validate data quality and consistency"
                 }
             },
