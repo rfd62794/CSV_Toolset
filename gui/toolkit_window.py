@@ -24,8 +24,7 @@ class CSVToolkitWindow(tk.Tk):
             "Order Reverser": ReverserFrame,
             "Sample Maker": SampleFrame,
             "Phone Extractor": PhoneFrame,
-            "Column Appender": AppenderFrame,
-            "Data Reformatter": ReformatterFrame
+            "Column Appender": AppenderFrame
         }
         
         self.setup_ui()
