@@ -93,6 +93,9 @@ class CSVToolkit(tk.Tk):
         self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
         self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
         
+        # Initialize tool buttons dictionary
+        self.tool_buttons = {}
+        
         # Category descriptions and icons
         self.categories = {
             "Analysis": {
@@ -155,7 +158,6 @@ class CSVToolkit(tk.Tk):
         
         # Create category tabs
         self.category_frames = {}
-        self.tool_buttons = {}  # Store buttons for search filtering
         
         for category, info in self.categories.items():
             # Create frame for this category
@@ -170,25 +172,6 @@ class CSVToolkit(tk.Tk):
             )
             desc_label.pack(fill=tk.X, padx=5, pady=5)
             
-            # Add tool buttons
-            for tool_name, tooltip in info['tools'].items():
-                btn = ttk.Button(
-                    category_frame,
-                    text=tool_name,
-                    command=lambda t=tool_name: self.show_tool(t)
-                )
-                btn.pack(padx=5, pady=2, fill=tk.X)
-                
-                # Add tooltip
-                self._create_tooltip(btn, tooltip)
-                
-                # Store button for search
-                self.tool_buttons[tool_name] = {
-                    'button': btn,
-                    'category': category,
-                    'tooltip': tooltip
-                }
-            
             self.category_notebook.add(category_frame, text=f"{info['icon']} {category}")
             self.category_frames[category] = category_frame
         
@@ -198,6 +181,9 @@ class CSVToolkit(tk.Tk):
         
         # Show welcome message
         self.show_welcome()
+        
+        # Update tool buttons after creating frames
+        self._update_tool_buttons()
         
         # Create toolbar
         toolbar = ttk.Frame(self)
