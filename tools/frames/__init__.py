@@ -4,6 +4,7 @@ from .phone_frame import PhoneFrame
 from .sample_frame import SampleFrame
 from .reverser_frame import ReverserFrame
 from .appender_frame import AppenderFrame
+from .reformatter_frame import ReformatterFrame
 
 __all__ = [
     'InspectorFrame',
@@ -11,5 +12,6 @@ __all__ = [
     'PhoneFrame',
     'SampleFrame',
     'ReverserFrame',
-    'AppenderFrame'
+    'AppenderFrame',
+    'ReformatterFrame'
 ] 

@@ -7,7 +7,8 @@ from tools.frames import (
     PhoneFrame,
     SampleFrame,
     ReverserFrame,
-    AppenderFrame
+    AppenderFrame,
+    ReformatterFrame
 )
 
 class CSVToolkitWindow(tk.Tk):
@@ -24,7 +25,8 @@ class CSVToolkitWindow(tk.Tk):
             "Order Reverser": ReverserFrame,
             "Sample Maker": SampleFrame,
             "Phone Extractor": PhoneFrame,
-            "Column Appender": AppenderFrame
+            "Column Appender": AppenderFrame,
+            "Data Reformatter": ReformatterFrame
         }
         
         self.setup_ui()
