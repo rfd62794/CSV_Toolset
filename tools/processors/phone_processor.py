@@ -1,104 +1,134 @@
 import pandas as pd
 import re
-from typing import List, Tuple, Dict, Any, Optional, Callable
+from typing import Dict, Any
+from pathlib import Path
 from ..base.base_processor import BaseProcessor
 
 class PhoneProcessor(BaseProcessor):
-    """Processor for extracting phone numbers from CSV columns"""
-    
-    # Phone number pattern - updated for better matching
-    PHONE_PATTERN = r'\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})'
+    """Processor for formatting phone numbers"""
     
     def __init__(self):
         super().__init__()
-        self.reader = self.get_reader()
+        self.formats = {
+            '(XXX) XXX-XXXX': r'(\d{3}) \d{3}-\d{4}',
+            'XXX-XXX-XXXX': r'\d{3}-\d{3}-\d{4}',
+            'XXX.XXX.XXXX': r'\d{3}.\d{3}.\d{4}',
+            'XXXXXXXXXX': r'\d{10}'
+        }
     
-    def get_columns(self, file_path: str) -> List[str]:
-        """Gets column names from CSV file"""
-        return self.reader.get_columns(file_path)
+    def format_number(self, number: str, format_pattern: str) -> str:
+        """Formats a phone number according to the specified pattern"""
+        try:
+            # Extract digits only
+            digits = ''.join(filter(str.isdigit, str(number)))
+            
+            # Handle empty or invalid input
+            if not digits or len(digits) < 10:
+                return number  # Return original if invalid
+            
+            # Take last 10 digits if longer
+            digits = digits[-10:]
+            
+            # Format according to pattern
+            if format_pattern == '(XXX) XXX-XXXX':
+                return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+            elif format_pattern == 'XXX-XXX-XXXX':
+                return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+            elif format_pattern == 'XXX.XXX.XXXX':
+                return f"{digits[:3]}.{digits[3:6]}.{digits[6:]}"
+            else:  # XXXXXXXXXX
+                return digits
+                
+        except Exception:
+            return number  # Return original if formatting fails
     
-    def format_phone(self, match: re.Match) -> str:
-        """Formats phone number to standard format"""
-        area_code, prefix, number = match.groups()
-        return f"({area_code}) {prefix}-{number}"
+    def preview_format(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Creates a preview of the phone formatting"""
+        try:
+            preview_df = df.head(5).copy()
+            
+            column = config.get('column')
+            if not column or column not in preview_df.columns:
+                raise ValueError("Invalid column selected")
+                
+            format_pattern = config.get('format', '(XXX) XXX-XXXX')
+            keep_original = config.get('keep_original', True)
+            validate = config.get('validate_numbers', True)
+            
+            # Format numbers
+            new_col = f"{column}_formatted"
+            preview_df[new_col] = preview_df[column].apply(
+                lambda x: self.format_number(x, format_pattern)
+            )
+            
+            # Validate if requested
+            if validate:
+                pattern = self.formats[format_pattern]
+                preview_df[f"{column}_valid"] = preview_df[new_col].apply(
+                    lambda x: bool(re.match(pattern, str(x)))
+                )
+            
+            # Remove original if not keeping
+            if not keep_original:
+                preview_df.drop(column, axis=1, inplace=True)
+                
+            return preview_df
+            
+        except Exception as e:
+            raise ValueError(f"Preview error: {str(e)}")
     
-    def extract_phones(self, text: str, format_numbers: bool = True) -> List[str]:
-        """Extracts phone numbers from text"""
-        if pd.isna(text):
-            return []
+    def process_file(self, df: pd.DataFrame, config: dict) -> Dict[str, Any]:
+        """Processes the input file according to configuration"""
+        try:
+            column = config.get('column')
+            if not column or column not in df.columns:
+                raise ValueError("Invalid column selected")
+                
+            format_pattern = config.get('format', '(XXX) XXX-XXXX')
+            keep_original = config.get('keep_original', True)
+            validate = config.get('validate_numbers', True)
             
-        text = str(text)  # Convert to string to handle numeric values
-        matches = list(re.finditer(self.PHONE_PATTERN, text))
-        if not matches:
-            return []
+            # Format numbers
+            new_col = f"{column}_formatted"
+            df[new_col] = df[column].apply(
+                lambda x: self.format_number(x, format_pattern)
+            )
             
-        if format_numbers:
-            return [self.format_phone(m) for m in matches]
-        return [m.group(0) for m in matches]
+            # Validate if requested
+            if validate:
+                pattern = self.formats[format_pattern]
+                df[f"{column}_valid"] = df[new_col].apply(
+                    lambda x: bool(re.match(pattern, str(x)))
+                )
+            
+            # Remove original if not keeping
+            if not keep_original:
+                df.drop(column, axis=1, inplace=True)
+            
+            # Save processed file
+            output_file = str(Path(self.input_file).with_stem(f"{Path(self.input_file).stem}_formatted"))
+            df.to_csv(output_file, index=False)
+            
+            return {
+                'success': True,
+                'output_file': output_file,
+                'error': None
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'output_file': None,
+                'error': str(e)
+            }
     
-    def process_file(self, input_file: str, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        Processes file to extract phone numbers
+    def _process_data(self, df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        """Implements required abstract method"""
+        column = config.get('column')
+        format_pattern = config.get('format', '(XXX) XXX-XXXX')
         
-        Args:
-            input_file: Path to input CSV
-            **options:
-                columns: List of columns to search
-                keep_original: Whether to keep original columns
-                format_numbers: Whether to format found numbers
-                progress_callback: Optional progress callback function
-        """
-        # Set up progress tracking
-        if 'progress_callback' in options:
-            self.set_progress_callback(options.pop('progress_callback'))
-        
-        # Read the data
-        self.update_progress(20, "Reading file...")
-        df = self.reader.read_csv(input_file)
-        
-        # Process the data
-        self.update_progress(40, "Processing columns...")
-        result_df, stats = self._process_data(df, **options)
-        
-        return result_df, stats
-    
-    def _process_data(self, df: pd.DataFrame, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Processes DataFrame to extract phone numbers"""
-        columns = options.get('columns', [])
-        keep_original = options.get('keep_original', True)
-        format_numbers = options.get('format_numbers', True)
-        
-        # Create new DataFrame with selected columns
-        if keep_original:
-            result_df = df.copy()
-        else:
-            result_df = pd.DataFrame(index=df.index)
-        
-        phones_found = 0
-        total_cols = len(columns)
-        
-        # Process each column
-        for i, col in enumerate(columns):
-            # Extract phone numbers
-            new_col = f"{col}_phones"
-            phones = df[col].apply(lambda x: self.extract_phones(x, format_numbers))
-            
-            # Count total phones found
-            phones_found += sum(len(p) for p in phones)
-            
-            # Add extracted numbers to result
-            result_df[new_col] = phones.apply(lambda x: '; '.join(x) if x else '')
-            
-            # Update progress
-            if self.progress:
-                progress = int(40 + ((i + 1) / total_cols * 40))  # 40-80% progress
-                self.update_progress(progress, f"Processing column {i+1} of {total_cols}...")
-        
-        # Clean up any empty columns
-        if not keep_original:
-            result_df = result_df.loc[:, (result_df != '').any()]
-        
-        return result_df, {
-            'phones_found': phones_found,
-            'columns_processed': len(columns)
-        } 
+        df = df.copy()
+        df[column] = df[column].apply(
+            lambda x: self.format_number(x, format_pattern)
+        )
+        return df 
