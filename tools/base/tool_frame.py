@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import pandas as pd
 from ..widgets.file_selector import FileSelector
+from ..widgets.type_preview_dialog import TypePreviewDialog
+from ..utils.data_types import DataTypeDetector
 
 class BaseToolFrame(ttk.Frame):
     """Base class for tool frames"""
@@ -64,45 +66,39 @@ class BaseToolFrame(ttk.Frame):
         raise NotImplementedError
     
     def read_input_file(self) -> pd.DataFrame:
-        """Reads the input CSV file with better type handling"""
+        """Reads the input CSV file with type detection and preview"""
         if not self.input_file:
             self.show_error("No input file selected")
             return None
         
         try:
-            # First attempt: Try to infer types with low_memory=False
-            df = pd.read_csv(
-                self.input_file,
-                low_memory=False,
-                dtype_backend='numpy_nullable'  # Better handling of missing values
-            )
-            
-            # If we still have mixed types, read everything as string
-            mixed_cols = df.select_dtypes(include=['object']).columns
-            if len(mixed_cols) > 0:
-                # Create dtype dict for all columns
-                dtypes = {col: 'string' for col in mixed_cols}
-                
-                # Try to convert numeric columns
-                for col in df.columns:
-                    if col not in mixed_cols:
-                        try:
-                            # Check if column can be numeric
-                            pd.to_numeric(df[col], errors='raise')
-                            dtypes[col] = 'float64'  # Use float64 to handle both integers and decimals
-                        except (ValueError, TypeError):
-                            dtypes[col] = 'string'
-                
-                # Re-read with explicit dtypes
-                df = pd.read_csv(
-                    self.input_file,
-                    dtype=dtypes,
-                    low_memory=False
-                )
-            
+            # First read to detect types
+            df = pd.read_csv(self.input_file, low_memory=False)
             if df.empty:
                 self.show_error("File contains no data")
                 return None
+            
+            # Detect types for each column
+            detected_types = {}
+            for col in df.columns:
+                dtype, confidence = DataTypeDetector.detect_column_type(df[col])
+                detected_types[col] = dtype
+            
+            # Show type preview dialog
+            dialog = TypePreviewDialog(self, df, detected_types)
+            self.wait_window(dialog)
+            
+            if hasattr(dialog, 'result'):
+                # Re-read with selected types
+                try:
+                    df = pd.read_csv(self.input_file, low_memory=False)
+                    for col, type_ in dialog.result.items():
+                        df[col] = DataTypeDetector.convert_column(df[col], type_)
+                except Exception as e:
+                    self.show_warning(
+                        f"Some columns could not be converted to their selected types. "
+                        f"They will be kept as strings. Error: {str(e)}"
+                    )
             
             return df
             
