@@ -4,7 +4,13 @@ from .phone_frame import PhoneFrame
 from .sample_frame import SampleFrame
 from .reverser_frame import ReverserFrame
 from .appender_frame import AppenderFrame
-from .reformatter_frame import ReformatterFrame
+from .merger_frame import MergerFrame
+from .splitter_frame import SplitterFrame
+from .transformer_frame import TransformerFrame
+from .filter_frame import FilterFrame
+from .validator_frame import ValidatorFrame
+from .profiler_frame import ProfilerFrame
+from .column_manager_frame import ColumnManagerFrame
 
 __all__ = [
     'InspectorFrame',
@@ -13,5 +19,11 @@ __all__ = [
     'SampleFrame',
     'ReverserFrame',
     'AppenderFrame',
-    'ReformatterFrame'
+    'MergerFrame',
+    'SplitterFrame',
+    'TransformerFrame',
+    'FilterFrame',
+    'ValidatorFrame',
+    'ProfilerFrame',
+    'ColumnManagerFrame'
 ] 

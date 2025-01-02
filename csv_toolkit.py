@@ -15,6 +15,9 @@ from tools.frames.merger_frame import MergerFrame
 from tools.frames.splitter_frame import SplitterFrame
 from tools.frames.transformer_frame import TransformerFrame
 from tools.frames.filter_frame import FilterFrame
+from tools.frames.validator_frame import ValidatorFrame
+from tools.frames.profiler_frame import ProfilerFrame
+from tools.frames.column_manager_frame import ColumnManagerFrame
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -36,10 +39,12 @@ class CSVToolkit(tk.Tk):
         """Registers available tools with categories"""
         # Analysis tools
         self.tool_manager.register_tool(InspectorFrame, "Analysis")
+        self.tool_manager.register_tool(ProfilerFrame, "Analysis")
         
         # Data cleaning tools
         self.tool_manager.register_tool(SweeperFrame, "Data Cleaning")
         self.tool_manager.register_tool(PhoneFrame, "Data Cleaning")
+        self.tool_manager.register_tool(ValidatorFrame, "Data Cleaning")
         
         # Data manipulation tools
         self.tool_manager.register_tool(SampleFrame, "Data Manipulation")
@@ -49,6 +54,7 @@ class CSVToolkit(tk.Tk):
         self.tool_manager.register_tool(SplitterFrame, "Data Manipulation")
         self.tool_manager.register_tool(TransformerFrame, "Data Manipulation")
         self.tool_manager.register_tool(FilterFrame, "Data Manipulation")
+        self.tool_manager.register_tool(ColumnManagerFrame, "Data Manipulation")
     
     def create_widgets(self):
         """Creates main application widgets"""
@@ -196,6 +202,28 @@ class CSVToolkit(tk.Tk):
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About", command=self.show_about)
+        
+        # Add shortcuts for new tools
+        tools_menu.add_command(
+            label="Data Profiler",
+            command=lambda: self.open_tool(ProfilerFrame),
+            accelerator="Ctrl+P"
+        )
+        tools_menu.add_command(
+            label="Data Validator",
+            command=lambda: self.open_tool(ValidatorFrame),
+            accelerator="Ctrl+V"
+        )
+        tools_menu.add_command(
+            label="Column Manager",
+            command=lambda: self.open_tool(ColumnManagerFrame),
+            accelerator="Ctrl+M"
+        )
+        
+        # Bind keyboard shortcuts
+        self.bind_all("<Control-p>", lambda e: self.open_tool(ProfilerFrame))
+        self.bind_all("<Control-v>", lambda e: self.open_tool(ValidatorFrame))
+        self.bind_all("<Control-m>", lambda e: self.open_tool(ColumnManagerFrame))
     
     def run_tests(self):
         """Opens the test runner tool"""

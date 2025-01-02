@@ -2,61 +2,37 @@ from typing import Dict, Type, List, Set, Tuple, Optional
 from ..base.tool_frame import BaseToolFrame
 
 class ToolRegistry:
-    """Manages tool registration and dependencies"""
+    """Registry for available tools"""
+    
+    CATEGORIES = {
+        "Analysis": "Tools for analyzing CSV data",
+        "Data Cleaning": "Tools for cleaning and validating data",
+        "Data Manipulation": "Tools for manipulating data structure",
+        "Data Transformation": "Tools for transforming data content"
+    }
     
     def __init__(self):
-        self._tools: Dict[str, Type[BaseToolFrame]] = {}
-        self._categories: Dict[str, List[str]] = {}
-        self._dependencies: Dict[str, Set[str]] = {}
+        self._tools = {
+            category: [] for category in self.CATEGORIES
+        }
     
-    def register_tool(self, tool_class: Type[BaseToolFrame], 
-                     category: str = "General",
-                     dependencies: List[str] = None) -> None:
-        """
-        Registers a tool with category and dependencies
+    def register_tool(self, tool_class, category: str):
+        """Registers a tool in a category"""
+        if category not in self.CATEGORIES:
+            raise ValueError(f"Invalid category: {category}")
         
-        Args:
-            tool_class: Tool frame class
-            category: Tool category
-            dependencies: List of required module names
-        """
-        tool_name = tool_class.get_tool_name(None)
-        self._tools[tool_name] = tool_class
-        
-        # Add to category
-        if category not in self._categories:
-            self._categories[category] = []
-        self._categories[category].append(tool_name)
-        
-        # Store dependencies
-        if dependencies:
-            self._dependencies[tool_name] = set(dependencies)
+        if tool_class not in self._tools[category]:
+            self._tools[category].append(tool_class)
     
-    def get_tool_class(self, tool_name: str) -> Type[BaseToolFrame]:
-        """Gets tool class by name"""
-        return self._tools.get(tool_name)
-    
-    def get_categories(self) -> Dict[str, List[str]]:
-        """Gets all categories and their tools"""
-        return self._categories
-    
-    def check_dependencies(self, tool_name: str) -> Tuple[bool, Optional[str]]:
-        """
-        Checks if tool dependencies are available
+    def get_tools(self, category: str = None) -> list:
+        """Gets registered tools, optionally filtered by category"""
+        if category:
+            if category not in self.CATEGORIES:
+                raise ValueError(f"Invalid category: {category}")
+            return self._tools[category]
         
-        Returns:
-            tuple: (dependencies_met, error_message)
-        """
-        if tool_name not in self._dependencies:
-            return True, None
-            
-        missing = []
-        for module in self._dependencies[tool_name]:
-            try:
-                __import__(module)
-            except ImportError:
-                missing.append(module)
-        
-        if missing:
-            return False, f"Missing dependencies: {', '.join(missing)}"
-        return True, None 
+        # Return all tools if no category specified
+        all_tools = []
+        for tools in self._tools.values():
+            all_tools.extend(tools)
+        return all_tools 
