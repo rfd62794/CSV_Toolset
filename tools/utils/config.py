@@ -32,10 +32,10 @@ class ToolConfig:
     TOOL_CATEGORIES = {
         'Analysis': ['CSV Inspector'],
         'Data Cleaning': ['Column Sweeper', 'Phone Extractor'],
-        'Data Manipulation': ['Sample Maker', 'Order Reverser', 'Column Appender']
+        'Data Manipulation': ['Sample Maker', 'Order Reverser', 'Column Appender', 'Data Reformatter']
     }
     
-    # Add reverser-specific settings
+    # Reverser-specific settings
     REVERSER_SETTINGS = {
         'preview_rows': 5,
         'chunk_size': 10000,  # For large file processing

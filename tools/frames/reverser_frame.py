@@ -42,7 +42,7 @@ class ReverserFrame(BaseToolFrame):
         self.preview_frame = ttk.LabelFrame(self, text="Preview")
         self.preview_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        self.preview_text = ScrolledText(
+        self.preview_text = scrolledtext.ScrolledText(
             self.preview_frame,
             wrap=tk.WORD,
             height=10
@@ -61,10 +61,30 @@ class ReverserFrame(BaseToolFrame):
         self.file_path_var.trace_add('write', self.update_preview)
         self.header_var.trace_add('write', self.update_preview)
     
+    def update_preview(self, *args):
+        """Updates preview when file is selected"""
+        if self.input_file:
+            try:
+                # Show first few rows of original and reversed data
+                preview_df = self.processor.reader.preview_data(self.input_file)
+                reversed_df, _ = self.processor._process_data(
+                    preview_df,
+                    keep_header=self.header_var.get()
+                )
+                
+                self.preview_text.delete('1.0', tk.END)
+                self.preview_text.insert(tk.END, "Original data:\n")
+                self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
+                self.preview_text.insert(tk.END, "Reversed data:\n")
+                self.preview_text.insert(tk.END, str(reversed_df))
+                
+            except Exception as e:
+                self.show_error(f"Preview error: {str(e)}")
+    
     def process_file(self):
         """Reverses row order in CSV file"""
         if not self.input_file:
-            messagebox.showwarning("Warning", "Please select a file first")
+            self.show_warning("Please select a file first")
             return
             
         try:
@@ -93,23 +113,3 @@ class ReverserFrame(BaseToolFrame):
             
         except Exception as e:
             self.show_error(str(e)) 
-    
-    def update_preview(self, *args):
-        """Updates preview when file is selected"""
-        if self.input_file:
-            try:
-                # Show first few rows of original and reversed data
-                preview_df = self.processor.reader.preview_data(self.input_file)
-                reversed_df, _ = self.processor.process_data(
-                    preview_df,
-                    keep_header=self.header_var.get()
-                )
-                
-                self.preview_text.delete('1.0', tk.END)
-                self.preview_text.insert(tk.END, "Original data:\n")
-                self.preview_text.insert(tk.END, str(preview_df) + "\n\n")
-                self.preview_text.insert(tk.END, "Reversed data:\n")
-                self.preview_text.insert(tk.END, str(reversed_df))
-                
-            except Exception as e:
-                self.show_error(f"Preview error: {str(e)}") 
