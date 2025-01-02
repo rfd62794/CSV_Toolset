@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, scrolledtext
 import pandas as pd
 from ..base.tool_frame import BaseToolFrame
 from ..processors.reverser_processor import ReverserProcessor
+from ..widgets.tooltip import ToolTip
 
 class ReverserFrame(BaseToolFrame):
     """Frame for reversing row order in CSV files"""
@@ -55,6 +56,10 @@ class ReverserFrame(BaseToolFrame):
             command=self.process_file
         )
         self.process_btn.pack(pady=10)
+        
+        # Bind events
+        self.file_path_var.trace_add('write', self.update_preview)
+        self.header_var.trace_add('write', self.update_preview)
     
     def process_file(self):
         """Reverses row order in CSV file"""
