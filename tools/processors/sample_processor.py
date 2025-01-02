@@ -1,10 +1,19 @@
-import pandas as pd
-import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
+import pandas as pd
 from ..base.base_processor import BaseProcessor
+from .sampling_strategies import (
+    SamplingStrategy, SequentialSampling, 
+    RandomSampling, StratifiedSampling
+)
 
 class SampleProcessor(BaseProcessor):
     """Processor for creating data samples"""
+    
+    STRATEGIES = {
+        'sequential': SequentialSampling,
+        'random': RandomSampling,
+        'stratified': lambda col: StratifiedSampling(col)
+    }
     
     def __init__(self):
         super().__init__()
@@ -14,77 +23,48 @@ class SampleProcessor(BaseProcessor):
         """Gets column names from CSV file"""
         return self.reader.get_columns(file_path)
     
+    def get_strategy(self, method: str, strat_column: str = None) -> SamplingStrategy:
+        """Gets appropriate sampling strategy"""
+        if method not in self.STRATEGIES:
+            raise ValueError(f"Unknown sampling method: {method}")
+            
+        strategy_class = self.STRATEGIES[method]
+        if method == 'stratified':
+            if not strat_column:
+                raise ValueError("Stratification column required for stratified sampling")
+            return strategy_class(strat_column)
+        return strategy_class()
+    
     def _process_data(self, df: pd.DataFrame, **options) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """
-        Creates sample from DataFrame
-        
-        Args:
-            df: Input DataFrame
-            **options:
-                sample_size: Number of rows to sample
-                method: Sampling method ('sequential', 'random', 'stratified')
-                strat_column: Column to use for stratification
-                keep_header: Whether to keep header row
-        """
-        sample_size = int(options.get('sample_size', 100))
+        """Creates sample from DataFrame"""
+        # Validate and get options
+        sample_size = self._validate_sample_size(len(df), options.get('sample_size', 100))
         method = options.get('method', 'sequential')
-        strat_column = options.get('strat_column')
         keep_header = options.get('keep_header', True)
         
-        total_rows = len(df)
-        if sample_size > total_rows:
-            sample_size = total_rows
+        # Get appropriate strategy
+        strategy = self.get_strategy(method, options.get('strat_column'))
         
-        # Get sample based on method
-        if method == 'random':
-            sample = df.sample(n=sample_size)
-            
-        elif method == 'stratified' and strat_column:
-            # Calculate proportions for each group
-            props = df[strat_column].value_counts(normalize=True)
-            
-            # Get stratified sample
-            samples = []
-            for group in props.index:
-                group_size = int(np.ceil(props[group] * sample_size))
-                group_df = df[df[strat_column] == group]
-                if len(group_df) > group_size:
-                    samples.append(group_df.sample(n=group_size))
-                else:
-                    samples.append(group_df)
-            
-            sample = pd.concat(samples)
-            
-            # Trim to exact sample size if needed
-            if len(sample) > sample_size:
-                sample = sample.sample(n=sample_size)
-                
-        else:  # sequential
-            sample = df.head(sample_size)
+        # Create sample
+        sample = strategy.sample(df, sample_size)
         
-        # Sort by index if random sampling was used
-        if method in ['random', 'stratified']:
-            sample = sample.sort_index()
-        
-        # Add header row if requested
+        # Add header if requested
         if keep_header and method != 'sequential':
             header_row = df.head(1)
             sample = pd.concat([header_row, sample])
         
         return sample, {
-            'total_rows': total_rows,
+            'total_rows': len(df),
             'sampled_rows': len(sample),
             'method': method
         }
     
-    def validate_sample_size(self, total_rows: int, sample_size: Any) -> Tuple[bool, str]:
-        """Validates sample size input"""
+    def _validate_sample_size(self, total_rows: int, sample_size: Any) -> int:
+        """Validates and returns sample size"""
         try:
             size = int(sample_size)
             if size < 1:
-                return False, "Sample size must be at least 1"
-            if size > total_rows:
-                return False, f"Sample size ({size:,}) is larger than total rows ({total_rows:,})"
-            return True, ""
+                raise ValueError("Sample size must be at least 1")
+            return min(size, total_rows)
         except (ValueError, TypeError):
-            return False, "Sample size must be a valid number" 
+            raise ValueError("Sample size must be a valid number") 
