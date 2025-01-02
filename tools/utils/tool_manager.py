@@ -12,7 +12,12 @@ class ToolManager:
     
     def register_tool(self, tool_class: Type[BaseToolFrame], category: str):
         """Registers a tool"""
-        dependencies = tool_class.get_dependencies()
+        try:
+            dependencies = tool_class.get_dependencies()
+        except AttributeError:
+            # If get_dependencies not implemented, assume no dependencies
+            dependencies = []
+        
         self.registry.register_tool(tool_class, category, dependencies)
     
     def create_tool(self, tool_name: str, parent) -> BaseToolFrame:

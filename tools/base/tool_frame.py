@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
+from ..widgets.file_selector import FileSelector
 
 class BaseToolFrame(ttk.Frame):
     """Base class for tool frames"""
@@ -12,6 +13,11 @@ class BaseToolFrame(ttk.Frame):
         # Get tool_manager from the main application window
         self.tool_manager = self.get_tool_manager()
         self.create_widgets()
+    
+    @classmethod
+    def get_dependencies(cls) -> list:
+        """Gets tool dependencies - override if needed"""
+        return []
     
     def get_tool_manager(self):
         """Traverses widget hierarchy to find tool_manager"""
