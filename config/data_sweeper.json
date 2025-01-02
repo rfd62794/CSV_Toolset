@@ -1,0 +1,6 @@
+{
+    "trim_whitespace": true,
+    "remove_duplicates": false,
+    "drop_empty": false,
+    "null_handling": "Keep"
+}
