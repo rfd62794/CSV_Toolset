@@ -11,6 +11,10 @@ from tools.frames.appender_frame import AppenderFrame
 from pathlib import Path
 from tools.test_runner import TestRunnerTool
 from datetime import datetime
+from tools.frames.merger_frame import MergerFrame
+from tools.frames.splitter_frame import SplitterFrame
+from tools.frames.transformer_frame import TransformerFrame
+from tools.frames.filter_frame import FilterFrame
 
 class CSVToolkit(tk.Tk):
     def __init__(self):
@@ -41,6 +45,10 @@ class CSVToolkit(tk.Tk):
         self.tool_manager.register_tool(SampleFrame, "Data Manipulation")
         self.tool_manager.register_tool(ReverserFrame, "Data Manipulation")
         self.tool_manager.register_tool(AppenderFrame, "Data Manipulation")
+        self.tool_manager.register_tool(MergerFrame, "Data Manipulation")
+        self.tool_manager.register_tool(SplitterFrame, "Data Manipulation")
+        self.tool_manager.register_tool(TransformerFrame, "Data Manipulation")
+        self.tool_manager.register_tool(FilterFrame, "Data Manipulation")
     
     def create_widgets(self):
         """Creates main application widgets"""
