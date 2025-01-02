@@ -16,7 +16,7 @@ class SplitterFrame(BaseToolFrame):
         self.config_panel = ConfigPanel(self, "Split Settings")
         self.config_panel.pack(fill=tk.X, padx=5, pady=5)
         
-        # Add split type selection
+        # Add split options
         self.config_panel.add_choice_option(
             'split_type',
             'Split Method',

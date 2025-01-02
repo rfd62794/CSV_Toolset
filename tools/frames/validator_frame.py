@@ -51,13 +51,14 @@ class ValidatorFrame(BaseToolFrame):
         
         self.results_tree = ttk.Treeview(
             self.results_frame,
-            columns=('Rule', 'Status', 'Details'),
+            columns=('Column', 'Rule', 'Status', 'Details'),
             show='headings'
         )
-        for col in ('Rule', 'Status', 'Details'):
+        
+        for col in ('Column', 'Rule', 'Status', 'Details'):
             self.results_tree.heading(col, text=col)
         
-        self.results_tree.pack(fill=tk.BOTH, expand=True) 
+        self.results_tree.pack(fill=tk.BOTH, expand=True)
 
     def _on_range_check_changed(self, value: bool):
         """Handles range check option change"""
