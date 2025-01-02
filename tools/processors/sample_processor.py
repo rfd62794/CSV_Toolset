@@ -30,7 +30,7 @@ class SampleProcessor(BaseProcessor):
         except (ValueError, TypeError):
             return False, "Sample size must be a valid number"
     
-    def validate_file(self, df: pd.DataFrame) -> Tuple[bool, str]:
+    def validate_file(self, df: pd.DataFrame, **options) -> Tuple[bool, str]:
         """Validates input data"""
         if df.empty:
             return False, "File contains no data"
@@ -41,6 +41,16 @@ class SampleProcessor(BaseProcessor):
         if file_size > max_size:
             size_mb = max_size / (1024 * 1024)
             return False, f"File too large. Maximum size is {size_mb:.0f}MB"
+        
+        # Check for null values in stratification column
+        strat_column = options.get('strat_column')
+        if strat_column:
+            if strat_column not in df.columns:
+                return False, f"Stratification column '{strat_column}' not found"
+            if df[strat_column].isnull().any():
+                return False, f"Column '{strat_column}' contains missing values"
+            if df[strat_column].nunique() < 2:
+                return False, f"Column '{strat_column}' must have at least 2 unique values"
             
         return True, ""
     
@@ -217,3 +227,18 @@ class SampleProcessor(BaseProcessor):
             
         except Exception as e:
             raise RuntimeError(f"Error creating sample: {str(e)}") 
+    
+    def _get_group_stats(self, df: pd.DataFrame, sample: pd.DataFrame, strat_column: str) -> Dict[str, Any]:
+        """Calculates detailed group statistics"""
+        orig_props = df[strat_column].value_counts(normalize=True)
+        sample_props = sample[strat_column].value_counts(normalize=True)
+        
+        stats = {}
+        for group in orig_props.index:
+            stats[str(group)] = {
+                'original_count': int(orig_props[group] * len(df)),
+                'sample_count': int(sample_props.get(group, 0) * len(sample)),
+                'original_pct': f"{orig_props[group]*100:.1f}%",
+                'sample_pct': f"{sample_props.get(group, 0)*100:.1f}%"
+            }
+        return stats 
