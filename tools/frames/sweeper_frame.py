@@ -49,3 +49,7 @@ class SweeperFrame(BaseToolFrame):
             'Fill Value',
             default=''
         ) 
+    
+    def _on_null_handling_changed(self, value: str):
+        """Handles null handling option change"""
+        self.save_config() 

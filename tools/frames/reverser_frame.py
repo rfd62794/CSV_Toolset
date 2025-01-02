@@ -42,3 +42,7 @@ class ReverserFrame(BaseToolFrame):
         
         self.preview_tree = ttk.Treeview(self.preview_frame)
         self.preview_tree.pack(fill=tk.BOTH, expand=True) 
+    
+    def _on_reverse_type_changed(self, value: str):
+        """Handles reverse type change"""
+        self.save_config() 

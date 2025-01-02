@@ -37,3 +37,7 @@ class SampleFrame(BaseToolFrame):
             'strat_column',
             'Stratify By Column'
         ) 
+    
+    def _on_sample_type_changed(self, value: str):
+        """Handles sample type change"""
+        self.save_config() 

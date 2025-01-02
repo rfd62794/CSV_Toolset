@@ -59,3 +59,7 @@ class PhoneFrame(BaseToolFrame):
             choices=['Keep', 'Remove', 'Mark'],
             callback=self._on_invalid_handling_changed
         ) 
+    
+    def _on_column_changed(self, value: str):
+        """Handles column selection change"""
+        self.save_config() 
