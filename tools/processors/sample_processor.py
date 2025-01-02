@@ -90,27 +90,68 @@ class SampleProcessor(BaseProcessor):
                 if self.progress:
                     self.update_progress(40, "Creating stratified sample...")
                     
+                # Validate stratification column
+                if strat_column not in df.columns:
+                    raise ValueError(f"Stratification column '{strat_column}' not found")
+                    
                 # Calculate proportions for each group
-                props = df[strat_column].value_counts(normalize=True)
+                group_counts = df[strat_column].value_counts()
+                
+                # Check if we have enough samples in each group
+                min_group_size = group_counts.min()
+                if min_group_size < 1:
+                    raise ValueError(f"Found empty group in column '{strat_column}'")
+                
+                if sample_size < len(group_counts):
+                    raise ValueError(
+                        f"Sample size ({sample_size}) must be at least the number of groups "
+                        f"({len(group_counts)}) for stratified sampling"
+                    )
+                
+                # Calculate proportions and minimum samples per group
+                props = group_counts / len(df)
+                min_samples_per_group = max(1, int(sample_size * 0.01))  # At least 1% or 1 sample
                 
                 # Get stratified sample
                 samples = []
                 total_groups = len(props)
+                remaining_size = sample_size
                 
                 for i, (group, prop) in enumerate(props.items()):
                     if self.progress:
                         progress = int(40 + ((i + 1) / total_groups * 30))
                         self.update_progress(progress, f"Processing group {i+1} of {total_groups}...")
-                        
-                    group_size = int(np.ceil(prop * sample_size))
-                    group_df = df[df[strat_column] == group]
                     
-                    if len(group_df) > group_size:
-                        samples.append(group_df.sample(n=group_size))
+                    # Calculate group sample size (ensure at least minimum samples)
+                    group_df = df[df[strat_column] == group]
+                    desired_size = max(
+                        min_samples_per_group,
+                        min(
+                            int(np.ceil(prop * sample_size)),  # Proportional size
+                            len(group_df),  # Available size
+                            remaining_size  # Remaining samples needed
+                        )
+                    )
+                    
+                    # Take sample from group
+                    if len(group_df) > desired_size:
+                        group_sample = group_df.sample(
+                            n=desired_size,
+                            random_state=random_seed
+                        )
                     else:
-                        samples.append(group_df)
+                        group_sample = group_df
+                    
+                    samples.append(group_sample)
+                    remaining_size -= len(group_sample)
                 
                 sample = pd.concat(samples)
+                
+                # Add distribution stats
+                group_stats = {
+                    f"group_{group}": len(group_df)
+                    for group, group_df in sample.groupby(strat_column)
+                }
                 
                 # Trim to exact sample size if needed
                 if len(sample) > sample_size:
