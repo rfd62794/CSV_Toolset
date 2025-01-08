@@ -1,0 +1,131 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+  push:
+    branches: [ main ]
+    paths:
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -r requirements-docs.txt
+
+      - name: Run Safety check
+        id: safety
+        continue-on-error: true
+        run: |
+          safety check --json > safety-report.json || echo "Vulnerabilities found"
+
+      - name: Run Bandit
+        id: bandit
+        continue-on-error: true
+        run: |
+          bandit -r . -f json -o bandit-report.json || echo "Security issues found"
+
+      - name: Run pip-audit
+        id: pip-audit
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit --format json > pip-audit-report.json || echo "Vulnerabilities found"
+
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: bandit-report.json
+          category: bandit
+
+      - name: Process security reports
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read reports
+            const safetyReport = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+            const banditReport = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+            const pipAuditReport = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+            
+            // Create issue body
+            let body = '# Security Scan Report\n\n';
+            
+            // Add Safety findings
+            body += '## Safety Check Results\n';
+            if (safetyReport.length > 0) {
+              body += safetyReport.map(vuln => 
+                `- ⚠️ ${vuln.package}: ${vuln.vulnerability}\n  - ID: ${vuln.id}\n  - Spec: ${vuln.spec}\n`
+              ).join('\n');
+            } else {
+              body += '✅ No known vulnerabilities found\n';
+            }
+            
+            // Add Bandit findings
+            body += '\n## Bandit Scan Results\n';
+            const banditResults = banditReport.results || [];
+            if (banditResults.length > 0) {
+              body += banditResults.map(finding =>
+                `- ⚠️ ${finding.issue_text}\n  - File: ${finding.filename}:${finding.line_number}\n  - Severity: ${finding.issue_severity}\n`
+              ).join('\n');
+            } else {
+              body += '✅ No security issues found\n';
+            }
+            
+            // Add pip-audit findings
+            body += '\n## Dependency Audit Results\n';
+            if (pipAuditReport.vulnerabilities) {
+              body += Object.entries(pipAuditReport.vulnerabilities).map(([pkg, vulns]) =>
+                `- ⚠️ ${pkg}:\n${vulns.map(v => `  - ${v.id}: ${v.description}\n`).join('')}`
+              ).join('\n');
+            } else {
+              body += '✅ No vulnerabilities found\n';
+            }
+            
+            // Create issue if vulnerabilities found
+            if (safetyReport.length > 0 || banditResults.length > 0 || pipAuditReport.vulnerabilities) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Security vulnerabilities detected',
+                body: body,
+                labels: ['security', 'vulnerability']
+              });
+            }
+
+      - name: Check for critical vulnerabilities
+        if: steps.safety.outcome == 'failure' || steps.bandit.outcome == 'failure' || steps.pip-audit.outcome == 'failure'
+        run: |
+          echo "Critical security vulnerabilities found!"
+          echo "Please check the security report issue for details."
+          exit 1 
