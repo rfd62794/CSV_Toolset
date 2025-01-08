@@ -44,8 +44,11 @@
 - [ ] Set up automated documentation deployment
 - [ ] Configure GitHub Discussions
 - [x] Create documentation style guide
-- [ ] Set up pre-commit hooks
-- [ ] Create development environment setup script
+- [x] Set up pre-commit hooks
+- [x] Create development environment setup script
+- [ ] Create automated release workflow
+- [ ] Set up continuous integration pipeline
+- [ ] Configure dependency update bot
 
 ### Guides
 - [ ] Create comprehensive troubleshooting guide
@@ -83,6 +86,8 @@ See [DEVLOG.md](DEVLOG.md) for details and timestamps.
 - [x] Set up template validation workflow
 - [x] Create contributing guidelines with code style guide
 - [x] Create documentation style guide
+- [x] Set up pre-commit hooks
+- [x] Create development environment setup script
 
 ## Notes
 - Keep all documentation in Markdown format
