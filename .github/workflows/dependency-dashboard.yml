@@ -1,0 +1,161 @@
+name: Dependency Dashboard
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Monday
+  push:
+    paths:
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+  pull_request:
+    paths:
+      - 'requirements*.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit pip-licenses pipdeptree
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -r requirements-docs.txt
+
+      - name: Generate dependency reports
+        run: |
+          # Generate dependency tree
+          pipdeptree --json-tree > dependency-tree.json
+          
+          # Generate outdated packages report
+          pip list --outdated --format=json > outdated-packages.json
+          
+          # Generate security audit
+          pip-audit --format=json > security-audit.json
+          
+          # Generate license report
+          pip-licenses --format=json --with-authors --with-urls --with-description > license-report.json
+
+      - name: Process dependency data
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read reports
+            const depTree = JSON.parse(fs.readFileSync('dependency-tree.json', 'utf8'));
+            const outdated = JSON.parse(fs.readFileSync('outdated-packages.json', 'utf8'));
+            const security = JSON.parse(fs.readFileSync('security-audit.json', 'utf8'));
+            const licenses = JSON.parse(fs.readFileSync('license-report.json', 'utf8'));
+            
+            // Create dashboard content
+            let dashboard = '# Dependency Dashboard\n\n';
+            dashboard += `Last updated: ${new Date().toISOString().split('T')[0]}\n\n`;
+            
+            // Add summary section
+            dashboard += '## Summary\n\n';
+            dashboard += `- Total Dependencies: ${depTree.length}\n`;
+            dashboard += `- Outdated Packages: ${outdated.length}\n`;
+            dashboard += `- Security Issues: ${security.vulnerabilities ? Object.keys(security.vulnerabilities).length : 0}\n`;
+            dashboard += `- License Issues: ${licenses.filter(l => !l.license).length}\n\n`;
+            
+            // Add outdated packages section
+            dashboard += '## Outdated Packages\n\n';
+            dashboard += '| Package | Current | Latest | Type |\n';
+            dashboard += '|---------|----------|---------|------|\n';
+            outdated.forEach(pkg => {
+              dashboard += `| ${pkg.name} | ${pkg.version} | ${pkg.latest_version} | ${pkg.latest_filetype} |\n`;
+            });
+            dashboard += '\n';
+            
+            // Add security issues section
+            dashboard += '## Security Issues\n\n';
+            if (security.vulnerabilities) {
+              Object.entries(security.vulnerabilities).forEach(([pkg, vulns]) => {
+                dashboard += `### ${pkg}\n\n`;
+                vulns.forEach(v => {
+                  dashboard += `- ${v.id}: ${v.description}\n`;
+                });
+                dashboard += '\n';
+              });
+            } else {
+              dashboard += '✅ No security issues found\n\n';
+            }
+            
+            // Add dependency tree section
+            dashboard += '## Dependency Tree\n\n';
+            dashboard += '```\n';
+            const formatTree = (node, prefix = '') => {
+              let result = `${prefix}${node.package.key}\n`;
+              if (node.dependencies) {
+                node.dependencies.forEach((dep, i, arr) => {
+                  const isLast = i === arr.length - 1;
+                  result += formatTree(dep, `${prefix}${isLast ? '└── ' : '├── '}`);
+                });
+              }
+              return result;
+            };
+            depTree.forEach(node => {
+              dashboard += formatTree(node);
+            });
+            dashboard += '```\n\n';
+            
+            // Write dashboard to file
+            fs.writeFileSync('dependency-dashboard.md', dashboard);
+
+      - name: Update dashboard file
+        run: |
+          mkdir -p docs/dependencies
+          mv dependency-dashboard.md docs/dependencies/README.md
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "docs: Update dependency dashboard"
+          title: "docs: Update dependency dashboard"
+          body: |
+            This PR updates the dependency dashboard with the latest information.
+            
+            - Updates dependency tree
+            - Updates outdated packages list
+            - Updates security audit results
+            - Updates license information
+            
+            Generated automatically by the dependency dashboard workflow.
+          branch: update-dependency-dashboard
+          delete-branch: true
+          labels: dependencies, documentation
+
+      - name: Create dependency report issue
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const dashboard = fs.readFileSync('docs/dependencies/README.md', 'utf8');
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '📊 Weekly Dependency Report',
+              body: dashboard,
+              labels: ['dependencies', 'report']
+            }); 
