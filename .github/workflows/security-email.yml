@@ -1,0 +1,90 @@
+name: Security Email Handler
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  security-email:
+    if: contains(github.event.issue.labels.*.name, 'security')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Check security issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            
+            // Add security team members here
+            const securityTeam = [
+              'security@csv-toolset.example.com',
+              'admin@csv-toolset.example.com'
+            ];
+            
+            // Create email content
+            const emailBody = `
+            Security Issue Report
+            
+            Issue: ${issue.title}
+            Reporter: ${issue.user.login}
+            Link: ${issue.html_url}
+            
+            Description:
+            ${issue.body}
+            `;
+            
+            // Add private note to issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `🔒 Security team has been notified.\n\nFor urgent matters, please contact security@csv-toolset.example.com`
+            });
+            
+            // Lock the issue if it contains sensitive information
+            if (issue.body.toLowerCase().includes('vulnerability') || 
+                issue.body.toLowerCase().includes('security risk')) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'not_planned',
+                labels: ['security', 'confidential']
+              });
+              
+              await github.rest.issues.lock({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                lock_reason: 'confidential'
+              });
+            }
+
+      - name: Send security notification
+        if: contains(github.event.issue.labels.*.name, 'security')
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "🚨 Security Issue Report: ${{ github.event.issue.title }}"
+          to: security@csv-toolset.example.com
+          from: GitHub Security Bot <security-noreply@csv-toolset.example.com>
+          secure: true
+          body: |
+            Security Issue Report
+            
+            Issue: ${{ github.event.issue.title }}
+            Reporter: ${{ github.event.issue.user.login }}
+            Link: ${{ github.event.issue.html_url }}
+            
+            Description:
+            ${{ github.event.issue.body }}
+            
+            This is an automated message. Please do not reply directly.
+            For secure communication, use our PGP key available at SECURITY.md. 
