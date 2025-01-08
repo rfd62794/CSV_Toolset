@@ -1,151 +1,207 @@
 # Contributing to CSV Toolset
 
-Thank you for your interest in contributing to CSV Toolset! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to CSV Toolset! This document provides guidelines and standards for contributing to the project.
 
-## Development Environment Setup
+## Code of Conduct
 
-1. Fork and clone the repository:
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## How to Contribute
+
+### 1. Setting Up Development Environment
+
 ```bash
-git clone [your-fork-url]
+# Clone the repository
+git clone https://github.com/yourusername/CSV_Toolset.git
 cd CSV_Toolset
-```
 
-2. Set up Python virtual environment:
-```bash
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-source .venv/bin/activate  # Unix/MacOS
-```
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-3. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-## Code Style Guidelines
+### 2. Making Changes
 
-### Python Standards
-- Follow PEP 8 style guide
-- Use type hints for all function parameters and return values
-- Maximum line length: 100 characters
-- Use docstrings for all classes and functions
+1. Create a new branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+2. Make your changes
+3. Run tests:
+   ```bash
+   python -m pytest
+   ```
+4. Update documentation if needed
 
-### Example Function Style
-```python
-def process_csv_data(
-    input_file: str,
-    column_index: int,
-    encoding: Optional[str] = None
-) -> bool:
-    """
-    Process CSV data with specified parameters.
+### 3. Submitting Changes
 
-    Args:
-        input_file: Path to the input CSV file
-        column_index: Index of the column to process
-        encoding: File encoding (default: auto-detect)
+1. Push your changes to your fork
+2. Submit a pull request using our template
+3. Wait for review and address any feedback
 
-    Returns:
-        bool: True if processing successful, False otherwise
+## Code Style Guide
 
-    Raises:
-        FileNotFoundError: If input file doesn't exist
-        ValueError: If column_index is invalid
-    """
-    # Function implementation
-```
+### Python Style Standards
+
+1. Follow PEP 8 with these specifics:
+   - 4 spaces for indentation
+   - 88 characters max line length
+   - Use type hints for function parameters and return values
+   - Use docstrings for all public functions, classes, and modules
+
+2. Naming Conventions:
+   ```python
+   # Classes: PascalCase
+   class CsvProcessor:
+       
+   # Functions and variables: snake_case
+   def process_csv_file():
+       temp_variable = 0
+   
+   # Constants: UPPER_CASE
+   MAX_FILE_SIZE = 1024
+   ```
+
+3. Imports Organization:
+   ```python
+   # Standard library imports
+   import os
+   import sys
+   from typing import List, Dict
+   
+   # Third-party imports
+   import pandas as pd
+   import numpy as np
+   
+   # Local imports
+   from .utils import validate_csv
+   ```
+
+### Documentation Standards
+
+1. Docstring Format:
+   ```python
+   def process_csv(filepath: str, encoding: str = 'utf-8') -> pd.DataFrame:
+       """Process a CSV file and return a pandas DataFrame.
+       
+       Args:
+           filepath (str): Path to the CSV file
+           encoding (str, optional): File encoding. Defaults to 'utf-8'
+           
+       Returns:
+           pd.DataFrame: Processed data
+           
+       Raises:
+           FileNotFoundError: If file doesn't exist
+           ValueError: If file is empty
+       """
+   ```
+
+2. Comments:
+   - Use comments sparingly, prefer self-documenting code
+   - Comment complex algorithms and business logic
+   - Keep comments up to date with code changes
+
+### Testing Standards
+
+1. Test File Organization:
+   ```python
+   # test_csv_processor.py
+   def test_process_csv_valid_file():
+       """Test processing a valid CSV file."""
+       
+   def test_process_csv_empty_file():
+       """Test handling of empty CSV file."""
+   ```
+
+2. Test Coverage Requirements:
+   - Minimum 80% coverage for new code
+   - 100% coverage for critical data processing functions
+   - Include edge cases and error conditions
+
+### CSV Processing Guidelines
+
+1. File Handling:
+   ```python
+   def read_csv(filepath: str) -> pd.DataFrame:
+       """Read CSV with proper error handling."""
+       try:
+           return pd.read_csv(filepath)
+       except UnicodeDecodeError:
+           # Try different encodings
+           return pd.read_csv(filepath, encoding='latin1')
+   ```
+
+2. Performance Considerations:
+   - Use generators for large file processing
+   - Implement progress tracking for long operations
+   - Consider memory usage with large datasets
 
 ### Error Handling
-- Use specific exception types
-- Include error messages with context
-- Log errors appropriately
-- Provide user-friendly error messages in GUI
 
-### Logging
-- Use the Python logging module
-- Include appropriate log levels
-- Add context to log messages
-- Don't log sensitive information
+1. Exception Guidelines:
+   ```python
+   class CsvToolsetError(Exception):
+       """Base exception for CSV Toolset."""
+   
+   class ValidationError(CsvToolsetError):
+       """Raised when CSV validation fails."""
+   ```
 
-## Adding New Tools
+2. Logging Standards:
+   ```python
+   import logging
+   
+   logger = logging.getLogger(__name__)
+   
+   def process_file(filepath: str) -> None:
+       logger.info(f"Processing file: {filepath}")
+       try:
+           # Processing logic
+           pass
+       except Exception as e:
+           logger.error(f"Error processing file: {e}")
+           raise
+   ```
 
-### Standalone Tools
-1. Create new file in `stand_alone/` directory
-2. Follow the existing pattern:
-   - Class-based structure
-   - GUI implementation
-   - Error handling
-   - Progress tracking
-   - Logging
+## Pull Request Guidelines
 
-### Framework Components
-1. Add new modules to appropriate directories
-2. Update interfaces as needed
-3. Include unit tests
-4. Update documentation
+1. PR Title Format:
+   - feat: Add new feature
+   - fix: Fix bug
+   - docs: Update documentation
+   - refactor: Code refactoring
+   - test: Add tests
 
-## Testing
+2. PR Description:
+   - Clear description of changes
+   - Link to related issues
+   - Screenshots for UI changes
+   - Performance impact notes
 
-### Unit Tests
-- Write tests for new functionality
-- Place tests in `tests/` directory
-- Follow existing test patterns
-- Ensure tests are independent
+## Version Control
 
-### Running Tests
-```bash
-python -m pytest tests/
-```
+1. Commit Message Format:
+   ```
+   type(scope): Short description
+   
+   Longer description if needed
+   
+   Fixes #123
+   ```
 
-## Pull Request Process
+2. Branch Naming:
+   - feature/description
+   - bugfix/description
+   - docs/description
 
-1. Create a feature branch:
-```bash
-git checkout -b feature/your-feature-name
-```
+## Additional Resources
 
-2. Make your changes:
-- Follow code style guidelines
-- Add tests
-- Update documentation
-
-3. Commit your changes:
-```bash
-git add .
-git commit -m "Description of changes"
-```
-
-4. Push to your fork:
-```bash
-git push origin feature/your-feature-name
-```
-
-5. Create Pull Request:
-- Use clear, descriptive title
-- Include detailed description
-- Reference any related issues
-- Ensure all tests pass
-- Request review
-
-## Code Review Process
-
-### What We Look For
-- Code style compliance
-- Test coverage
-- Documentation
-- Error handling
-- Performance considerations
-- Security considerations
-
-### Review Timeline
-- Initial review within 1-2 days
-- Address feedback promptly
-- Final review and merge
-
-## Questions or Problems?
-
-- Open an issue for bugs
-- Use discussions for questions
-- Tag maintainers for urgent issues
-
-Thank you for contributing to CSV Toolset! 
+- [Python Style Guide (PEP 8)](https://www.python.org/dev/peps/pep-0008/)
+- [Type Hints Guide (PEP 484)](https://www.python.org/dev/peps/pep-0484/)
+- [Documentation Guide](docs/tutorials/development.md)
+- [Testing Guide](docs/tutorials/testing.md) 

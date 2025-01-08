@@ -39,11 +39,13 @@
 - [ ] Set up security email for vulnerability reporting
 - [x] Create SUPPORT.md with user support guidelines
 - [x] Set up GitHub Actions for documentation checks
-- [ ] Create contributing guidelines with code style guide
+- [x] Create contributing guidelines with code style guide
 - [x] Set up template validation workflow
 - [ ] Set up automated documentation deployment
 - [ ] Configure GitHub Discussions
-- [ ] Create documentation style guide
+- [x] Create documentation style guide
+- [ ] Set up pre-commit hooks
+- [ ] Create development environment setup script
 
 ### Guides
 - [ ] Create comprehensive troubleshooting guide
@@ -79,6 +81,8 @@ See [DEVLOG.md](DEVLOG.md) for details and timestamps.
 - [x] Create SUPPORT.md with user support guidelines
 - [x] Set up GitHub Actions for documentation checks
 - [x] Set up template validation workflow
+- [x] Create contributing guidelines with code style guide
+- [x] Create documentation style guide
 
 ## Notes
 - Keep all documentation in Markdown format
