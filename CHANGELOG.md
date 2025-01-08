@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Projectdocumentation:
+- Project documentation:
   - CODE_OF_CONDUCT.md with Contributor Covenant guidelines
   - SECURITY.md with vulnerability reporting process
   - GitHub issue templates for bugs and feature requests
@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automated API reference updates
   - Documentation version management
   - Version-specific documentation
+  - Automated changelog generation
+  - Changelog configuration and workflow
   - Additional project infrastructure tasks identified
 
 ### Changed
@@ -53,11 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved code documentation coverage
 - Enhanced version management
 - Added documentation versioning support
-
-### Fixed
-- Encoding detection issues
-- Memory management in large file processing
-- GUI responsiveness during long operations
+- Automated changelog updates
+- Enhanced release notes generation
 
 ### Security
 - Added automated security scanning
@@ -67,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configured security scanning for dependencies
 - Added cookie consent management
 - Added version-specific security notices
+- Enhanced changelog security validation
 
 ## [1.0.0] - 2025-01-08
 
