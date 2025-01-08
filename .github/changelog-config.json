@@ -1,0 +1,68 @@
+{
+    "categories": [
+        {
+            "title": "### Added",
+            "labels": ["feature", "enhancement"]
+        },
+        {
+            "title": "### Changed",
+            "labels": ["change", "refactor"]
+        },
+        {
+            "title": "### Deprecated",
+            "labels": ["deprecation"]
+        },
+        {
+            "title": "### Removed",
+            "labels": ["removed"]
+        },
+        {
+            "title": "### Fixed",
+            "labels": ["bug", "bugfix", "fix"]
+        },
+        {
+            "title": "### Security",
+            "labels": ["security"]
+        },
+        {
+            "title": "### Documentation",
+            "labels": ["documentation"]
+        },
+        {
+            "title": "### Dependencies",
+            "labels": ["dependencies"]
+        }
+    ],
+    "ignore_labels": [
+        "duplicate",
+        "invalid",
+        "question",
+        "wontfix"
+    ],
+    "sort": "ASC",
+    "template": "${{CHANGELOG}}\n\n${{UNCATEGORIZED}}",
+    "pr_template": "- ${{TITLE}} (#${{NUMBER}})",
+    "empty_template": "- No changes",
+    "label_extractor": [
+        {
+            "pattern": "(.) (.+)",
+            "target": "$1",
+            "flags": "gu"
+        }
+    ],
+    "transformers": [
+        {
+            "pattern": "[A-Z]+!?:",
+            "target": ""
+        }
+    ],
+    "max_tags_to_fetch": 200,
+    "max_pull_requests": 200,
+    "max_back_track_time": 365,
+    "exclude_merge_branches": [
+        "Owner/qa"
+    ],
+    "tag_resolver": {
+        "method": "semver"
+    }
+} 
