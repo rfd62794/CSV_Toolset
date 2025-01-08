@@ -29,7 +29,7 @@
 - [ ] Document extension points for custom tools
 
 ### Project Infrastructure
-- [ ] Create main README.md with project overview
+- [x] Create main README.md with project overview
 - [ ] Create CHANGELOG.md for version tracking
 - [ ] Create LICENSE.md
 - [ ] Create CODE_OF_CONDUCT.md
@@ -61,6 +61,7 @@ See [DEVLOG.md](DEVLOG.md) for details and timestamps.
 - [x] Create csv_column_splitter.md documentation
 - [x] Create getting_started.md tutorial
 - [x] Create initial documentation structure
+- [x] Create main README.md with project overview
 
 ## Notes
 - Keep all documentation in Markdown format
