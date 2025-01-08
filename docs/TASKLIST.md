@@ -46,12 +46,15 @@
 - [x] Create documentation style guide
 - [x] Set up pre-commit hooks
 - [x] Create development environment setup script
-- [ ] Create automated release workflow
-- [ ] Set up continuous integration pipeline
+- [x] Create automated release workflow
+- [x] Set up continuous integration pipeline
 - [ ] Configure dependency update bot
 - [ ] Set up documentation analytics
 - [ ] Configure automated API documentation generation
 - [ ] Set up documentation versioning
+- [ ] Create automated changelog generator
+- [ ] Set up automated version bumping
+- [ ] Configure release drafter
 
 ### Guides
 - [ ] Create comprehensive troubleshooting guide
@@ -92,6 +95,8 @@ See [DEVLOG.md](DEVLOG.md) for details and timestamps.
 - [x] Set up pre-commit hooks
 - [x] Create development environment setup script
 - [x] Set up automated documentation deployment
+- [x] Create automated release workflow
+- [x] Set up continuous integration pipeline
 
 ## Notes
 - Keep all documentation in Markdown format
