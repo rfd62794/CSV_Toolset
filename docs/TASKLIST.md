@@ -31,6 +31,11 @@
 - [ ] Create comprehensive troubleshooting guide
 - [ ] Create error handling guide
 - [ ] Create testing guide
+- [ ] Document csv_toolkit.py core functionality
+- [ ] Create csv_utils.py API reference
+- [ ] Document app.py integration points
+- [ ] Create configuration system documentation
+- [ ] Document GUI framework architecture
 
 ## Priority 3 - Medium (Important Improvements)
 - [ ] Configure GitHub Discussions
@@ -49,6 +54,11 @@
 - [ ] Add version bump validation
 - [ ] Create version bump templates
 - [ ] Set up version bump notifications
+- [ ] Set up pytest configuration documentation
+- [ ] Create tools directory structure guide
+- [ ] Document stand_alone vs integrated tools differences
+- [ ] Create config directory usage guide
+- [ ] Add GUI customization documentation
 
 ## Priority 4 - Low (Nice to Have)
 - [ ] Implement A/B testing for documentation
