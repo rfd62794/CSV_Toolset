@@ -43,9 +43,17 @@ class ConfigPanel(ttk.LabelFrame):
         
         ttk.Label(frame, text=label).pack(side=tk.LEFT)
         
-        var = tk.IntVar(value=default)
+        var = tk.StringVar(value=str(default))
+        
+        def safe_get():
+            try:
+                val = var.get()
+                return int(val) if val else default
+            except ValueError:
+                return default
+                
         if callback:
-            var.trace_add('write', lambda *args: callback(var.get()))
+            var.trace_add('write', lambda *args: callback(safe_get()))
         
         vcmd = (self.register(lambda P: self._validate_number(P, min_val, max_val)), '%P')
         entry = ttk.Entry(

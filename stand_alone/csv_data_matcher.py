@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+import chardet
 
 class CSVDataMatcher:
     """GUI application for matching and appending data between CSV files."""
@@ -20,10 +21,42 @@ class CSVDataMatcher:
         self.target_path: Optional[Path] = None
         self.source_headers: List[str] = []
         self.target_headers: List[str] = []
+        self.source_encoding: str = 'utf-8'
+        self.target_encoding: str = 'utf-8'
         
         self._create_widgets()
         self._center_window()
         
+    def _detect_encoding(self, file_path: Path) -> str:
+        """Detect file encoding using chardet."""
+        with open(file_path, 'rb') as f:
+            raw_data = f.read()
+            result = chardet.detect(raw_data)
+            encoding = result['encoding']
+            # Default to utf-8 if detection fails
+            return encoding if encoding else 'utf-8'
+            
+    def _read_csv_with_encoding(self, file_path: Path) -> Tuple[List[str], str]:
+        """Read CSV file with automatic encoding detection."""
+        encoding = self._detect_encoding(file_path)
+        try:
+            with open(file_path, 'r', encoding=encoding, newline='') as f:
+                reader = csv.reader(f)
+                headers = next(reader)
+                return headers, encoding
+        except UnicodeDecodeError:
+            # Fallback encodings if detection fails
+            fallback_encodings = ['utf-8', 'utf-8-sig', 'latin1', 'iso-8859-1', 'cp1252']
+            for enc in fallback_encodings:
+                try:
+                    with open(file_path, 'r', encoding=enc, newline='') as f:
+                        reader = csv.reader(f)
+                        headers = next(reader)
+                        return headers, enc
+                except UnicodeDecodeError:
+                    continue
+            raise ValueError(f"Could not read file with any supported encoding")
+            
     def _create_widgets(self):
         """Create GUI elements."""
         main_frame = ttk.Frame(self.root, padding="10")
@@ -132,26 +165,28 @@ class CSVDataMatcher:
     def _load_source_headers(self):
         """Load headers from source CSV file."""
         try:
-            with open(self.source_path, 'r', newline='') as f:
-                reader = csv.reader(f)
-                self.source_headers = next(reader)
-                self.source_col_combo['values'] = self.source_headers
-                self.source_data_combo['values'] = self.source_headers
-                if self.source_headers:
-                    self.source_col_combo.set(self.source_headers[0])
-                    self.source_data_combo.set(self.source_headers[-1])
+            headers, encoding = self._read_csv_with_encoding(self.source_path)
+            self.source_headers = headers
+            self.source_encoding = encoding
+            self.source_col_combo['values'] = self.source_headers
+            self.source_data_combo['values'] = self.source_headers
+            if self.source_headers:
+                self.source_col_combo.set(self.source_headers[0])
+                self.source_data_combo.set(self.source_headers[-1])
+            self.status_var.set(f"Source file loaded (Encoding: {encoding})")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load source file: {str(e)}")
             
     def _load_target_headers(self):
         """Load headers from target CSV file."""
         try:
-            with open(self.target_path, 'r', newline='') as f:
-                reader = csv.reader(f)
-                self.target_headers = next(reader)
-                self.target_col_combo['values'] = self.target_headers
-                if self.target_headers:
-                    self.target_col_combo.set(self.target_headers[0])
+            headers, encoding = self._read_csv_with_encoding(self.target_path)
+            self.target_headers = headers
+            self.target_encoding = encoding
+            self.target_col_combo['values'] = self.target_headers
+            if self.target_headers:
+                self.target_col_combo.set(self.target_headers[0])
+            self.status_var.set(f"Target file loaded (Encoding: {encoding})")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load target file: {str(e)}")
             
@@ -200,7 +235,7 @@ class CSVDataMatcher:
         source_col_idx = self.source_headers.index(self.source_col_var.get())
         source_data_idx = self.source_headers.index(self.source_data_var.get())
         
-        with open(self.source_path, 'r', newline='') as f:
+        with open(self.source_path, 'r', encoding=self.source_encoding, newline='') as f:
             reader = csv.reader(f)
             next(reader)  # Skip header
             for row in reader:
@@ -216,8 +251,8 @@ class CSVDataMatcher:
         target_col_idx = self.target_headers.index(self.target_col_var.get())
         new_header = self.target_headers + [f"Matched_{self.source_data_var.get()}"]
         
-        with open(self.target_path, 'r', newline='') as fin, \
-             open(self.output_path_var.get(), 'w', newline='') as fout:
+        with open(self.target_path, 'r', encoding=self.target_encoding, newline='') as fin, \
+             open(self.output_path_var.get(), 'w', encoding='utf-8', newline='') as fout:
             reader = csv.reader(fin)
             writer = csv.writer(fout)
             
