@@ -1,7 +1,7 @@
 import tkinter as tk
+from tkinter import ttk, messagebox
 from csv_toolkit import CSVToolkit
 from tools.preferences_dialog import ToolPreferencesDialog
-from pathlib import Path
 
 class CSVToolkitApp(CSVToolkit):
     def __init__(self):
@@ -9,56 +9,53 @@ class CSVToolkitApp(CSVToolkit):
         
         # Load preferences
         self.preferences = ToolPreferencesDialog.load_preferences()
-        
-        # Show preferences dialog on first run
         if self.preferences is None:
             self.show_preferences_dialog()
+            
+        # Create menu
+        self.create_menu()
         
-        # Apply preferences to tool visibility
-        self.apply_tool_preferences()
+        # Apply preferences
+        self.apply_preferences()
         
-        # Add preferences to menu
-        self.add_preferences_menu()
-    
+    def create_menu(self):
+        menubar = tk.Menu(self.root)
+        self.root.config(menu=menubar)
+        
+        # Tools menu
+        tools_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Tools", menu=tools_menu)
+        tools_menu.add_command(label="Preferences", command=self.show_preferences_dialog, accelerator="Ctrl+,")
+        
+        # Bind keyboard shortcut
+        self.root.bind("<Control-,>", lambda e: self.show_preferences_dialog())
+        
     def show_preferences_dialog(self):
-        """Show tool preferences dialog"""
-        dialog = ToolPreferencesDialog(self, self.categories, self.preferences)
-        self.wait_window(dialog.dialog)
-        
-        if dialog.result is not None:
+        dialog = ToolPreferencesDialog(self.root, self.categories, self.preferences)
+        self.root.wait_window(dialog)
+        if dialog.result:
             self.preferences = dialog.result
-            ToolPreferencesDialog.save_preferences(self.preferences)
-            self.apply_tool_preferences()
-    
-    def apply_tool_preferences(self):
-        """Apply tool visibility preferences"""
+            self.apply_preferences()
+            
+    def apply_preferences(self):
         if not self.preferences:
             return
             
-        for tool_name, info in self.tool_buttons.items():
-            button = info['button'].master  # Get the tool frame
-            if self.preferences.get(tool_name, True):
-                button.grid()  # Show tool
-            else:
-                button.grid_remove()  # Hide tool
-    
-    def add_preferences_menu(self):
-        """Add preferences to menu"""
-        # Add preferences to Tools menu
-        tools_menu = self.menubar.winfo_children()[1]  # Get Tools menu
-        tools_menu.add_separator()
-        tools_menu.add_command(
-            label="Tool Preferences",
-            command=self.show_preferences_dialog,
-            accelerator="Ctrl+,"
-        )
-        
-        # Add keyboard shortcut
-        self.bind_all("<Control-comma>", lambda e: self.show_preferences_dialog())
-
-def main():
-    app = CSVToolkitApp()
-    app.mainloop()
+        # Show/hide tools based on preferences
+        for category in self.categories.values():
+            for tool_name in category["tools"]:
+                visible = self.preferences.get(tool_name, True)
+                if tool_name in self.tool_buttons:
+                    if visible:
+                        self.tool_buttons[tool_name].grid()
+                        self.tool_labels[tool_name].grid()
+                    else:
+                        self.tool_buttons[tool_name].grid_remove()
+                        self.tool_labels[tool_name].grid_remove()
+                        
+    def run(self):
+        self.root.mainloop()
 
 if __name__ == "__main__":
-    main() 
+    app = CSVToolkitApp()
+    app.run() 
