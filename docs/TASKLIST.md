@@ -1,79 +1,100 @@
-# Documentation Tasks
+# Project Tasks
 
-## Release 1 (r1) - Completed
-- [x] Create initial project structure
-- [x] Set up basic documentation framework
-- [x] Implement tool preferences system
-- [x] Document csv_data_truncator.md
-- [x] Create csv_column_splitter.md
-- [x] Add getting_started.md tutorial
+## Release 1.1.0 Tasks (Current Sprint)
 
-## Priority 1 - Critical (Core Functionality)
-- [ ] Add preferences validation:
-  - [x] Design validation schema
-  - [x] Implement schema validation
-  - [x] Add error handling
-  - [x] Create validation tests
-  - [x] Add performance checks
-  - [ ] Create validation documentation
-- [ ] Create preferences backup/restore:
-  - [ ] Design backup format
-  - [ ] Implement backup system
-  - [ ] Add restore functionality
-  - [ ] Create recovery tests
-  - [ ] Add backup documentation
-- [ ] Implement version control for preferences:
-  - [ ] Design version schema
-  - [ ] Add migration system
-  - [ ] Create compatibility tests
-  - [ ] Add version documentation
-- [ ] Add comprehensive error handling:
-  - [ ] Design error patterns
-  - [ ] Implement recovery strategies
-  - [ ] Add logging system
-  - [ ] Create error documentation
-- [ ] Create testing framework:
-  - [x] Set up test infrastructure
-  - [x] Add unit tests
-  - [x] Create integration tests
-  - [ ] Add test documentation
-- [ ] Add performance monitoring:
-  - [x] Design metrics system
-  - [x] Implement monitoring
-  - [x] Add performance tests
-  - [x] Create monitoring documentation
+### Core System
+- [ ] Preferences System
+  - [x] Validation Framework
+    - [x] Schema design
+    - [x] Implementation
+    - [x] Error handling
+    - [x] Testing
+    - [x] Performance monitoring
+    - [ ] Documentation
+  - [ ] Backup/Restore
+    - [ ] Format design
+    - [ ] Implementation
+    - [ ] Recovery system
+    - [ ] Testing
+    - [ ] Documentation
+  - [ ] Version Control
+    - [ ] Schema design
+    - [ ] Migration system
+    - [ ] Compatibility testing
+    - [ ] Documentation
 
-## Priority 2 - High (Important Features)
-- [ ] Create data validation guide
-- [ ] Add encoding handling documentation
-- [ ] Document error handling patterns
-- [ ] Create performance optimization guide
-- [ ] Add testing documentation
-- [ ] Create troubleshooting guide
+### Testing Framework
+- [x] Infrastructure
+  - [x] Unit test setup
+  - [x] Integration test setup
+  - [x] Performance test setup
+- [x] Test Implementation
+  - [x] Unit tests
+  - [x] Integration tests
+  - [x] Performance tests
+- [ ] Documentation
+  - [ ] Test guide
+  - [ ] Coverage reports
+  - [ ] Performance benchmarks
 
-## Priority 3 - Medium (Improvements)
-- [ ] Add more code examples
-- [ ] Create advanced tutorials
-- [ ] Document best practices
-- [ ] Add configuration guide
-- [ ] Create tool extension guide
-- [ ] Document API integration
-- [ ] Add performance tips
-- [ ] Create debugging guide
-- [ ] Document common issues
+### Documentation
+- [x] Project Structure
+  - [x] Directory organization
+  - [x] Component overview
+  - [x] Development workflow
+- [x] Performance Monitoring
+  - [x] System overview
+  - [x] Integration guide
+  - [x] Best practices
+- [ ] Validation System
+  - [ ] Architecture guide
+  - [ ] Usage examples
+  - [ ] Error handling
+- [ ] Core Guides
+  - [ ] Getting started
+  - [ ] Tool development
+  - [ ] Contributing
 
-## Tool Documentation
-- [ ] Create csv_inspector.py documentation
-- [ ] Document phoneColumnExtract.py
-- [ ] Add sample_maker.py guide
-- [ ] Document reformatter_processor.py
-- [ ] Create filter_processor.py guide
-- [ ] Document sweeper_processor.py
+## Release 1.2.0 Planning
+
+### CSV Processing
+- [ ] Advanced Features
+  - [ ] Custom filters
+  - [ ] Transformations
+  - [ ] Batch processing
+- [ ] Data Validation
+  - [ ] Schema system
+  - [ ] Custom rules
+  - [ ] Error correction
+- [ ] Performance
+  - [ ] Caching
+  - [ ] Memory optimization
+  - [ ] Speed improvements
+
+### Documentation
+- [ ] Advanced Guides
+  - [ ] Data processing
+  - [ ] Performance tuning
+  - [ ] Error handling
+- [ ] API Documentation
+  - [ ] Core modules
+  - [ ] Utilities
+  - [ ] Extensions
+- [ ] Examples
+  - [ ] Common use cases
+  - [ ] Advanced features
+  - [ ] Best practices
+
+## Immediate Focus
+1. Complete preferences backup/restore system
+2. Implement version control
+3. Enhance error handling
+4. Complete system documentation
 
 ## Notes
-- Focus on core functionality first
-- Keep documentation simple and clear
-- Add examples for common use cases
-- Document error handling thoroughly
-- Include performance considerations
-- Track internal revisions (r#) for development milestones
+- All changes must be documented in DEVLOG.md
+- Update CHANGELOG.md for each feature
+- Review MILESTONES.md progress regularly
+- Keep documentation current with changes
+- Add tests for all new features
+- Monitor performance metrics
