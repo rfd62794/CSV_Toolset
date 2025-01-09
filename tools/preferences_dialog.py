@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 from datetime import datetime
+from .preferences_validator import PreferencesValidator
 
 class ToolPreferencesDialog(tk.Toplevel):
     def __init__(self, parent, categories, current_preferences=None):
@@ -117,9 +118,16 @@ class ToolPreferencesDialog(tk.Toplevel):
             var.set(False)
             
     def _save(self):
-        self.preferences = {name: var.get() for name, var in self.tool_vars.items()}
+        """Save preferences and close dialog"""
         try:
-            self.save_preferences(self.preferences)
+            self.preferences = {name: var.get() for name, var in self.tool_vars.items()}
+            if not PreferencesValidator.save_validated(self.get_preferences_path(), {
+                "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
+                "preferences": self.preferences,
+                "categories": self.categories
+            }):
+                raise ValueError("Validation failed")
+                
             self.result = self.preferences
             self.destroy()
         except Exception as e:
@@ -139,14 +147,8 @@ class ToolPreferencesDialog(tk.Toplevel):
         
     @classmethod
     def load_preferences(cls):
-        try:
-            path = cls.get_preferences_path()
-            if not path.exists():
-                return None
-            with open(path) as f:
-                return json.load(f)
-        except Exception:
-            return None
+        """Load and validate preferences"""
+        return PreferencesValidator.load_and_validate(cls.get_preferences_path())
             
     @classmethod
     def save_preferences(cls, preferences):
@@ -176,8 +178,9 @@ class ToolPreferencesDialog(tk.Toplevel):
                     "categories": self.categories
                 }
                 
-                with open(filename, 'w') as f:
-                    json.dump(backup_data, f, indent=2)
+                if not PreferencesValidator.save_validated(Path(filename), backup_data):
+                    raise ValueError("Validation failed")
+                    
                 messagebox.showinfo("Success", "Preferences backed up successfully!")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to backup preferences: {str(e)}")
@@ -191,15 +194,12 @@ class ToolPreferencesDialog(tk.Toplevel):
         
         if filename:
             try:
-                with open(filename) as f:
-                    backup_data = json.load(f)
-                
-                # Validate backup data
-                if not isinstance(backup_data, dict) or "preferences" not in backup_data:
-                    raise ValueError("Invalid backup file format")
-                
+                data = PreferencesValidator.load_and_validate(Path(filename))
+                if data is None:
+                    raise ValueError("Invalid backup file")
+                    
                 # Update preferences
-                restored_prefs = backup_data["preferences"]
+                restored_prefs = data["preferences"]
                 for tool_name, var in self.tool_vars.items():
                     if tool_name in restored_prefs:
                         var.set(restored_prefs[tool_name])
