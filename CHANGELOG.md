@@ -71,6 +71,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - JSON-based storage format
   - Preferences validation
   - User feedback for errors
+  - Preferences backup/restore functionality
+  - Timestamped backup files
+  - Backup data validation
+  - User-friendly file dialogs
+  - Operation status feedback
+  - Error recovery for backups
+  - Category preservation in backups
+  - Backup file format validation
 
 ### Changed
 - Improved error handling in all tools
@@ -121,6 +129,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized tool loading
 - Improved user feedback
 - Enhanced configuration storage
+- Enhanced preferences management:
+  - Added backup/restore capabilities
+  - Improved error handling
+  - Enhanced user feedback
+  - Added data validation
+  - Improved file operations
 
 ### Security
 - Added automated security scanning

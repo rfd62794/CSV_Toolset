@@ -41,11 +41,15 @@
 - [x] Add tool visibility configuration guide
 - [x] Document preferences file format
 - [x] Create first-run experience guide
+- [x] Create preferences backup/restore guide
 - [ ] Add preferences migration guide
-- [ ] Create preferences backup/restore guide
 - [ ] Add preferences troubleshooting guide
 - [ ] Document keyboard shortcuts
 - [ ] Create tool categories guide
+- [ ] Add preferences versioning support
+- [ ] Create preferences import/export wizard
+- [ ] Add preferences conflict resolution
+- [ ] Create preferences validation guide
 
 ## Priority 3 - Medium (Important Improvements)
 - [x] Configure GitHub Discussions
@@ -83,6 +87,14 @@
 - [ ] Create preferences audit logging
 - [ ] Add preferences analytics
 - [ ] Create preferences testing guide
+- [ ] Add preferences backup scheduling
+- [ ] Create preferences backup rotation
+- [ ] Add preferences backup compression
+- [ ] Create preferences backup encryption
+- [ ] Add preferences backup cloud sync
+- [ ] Create preferences backup reports
+- [ ] Add preferences backup notifications
+- [ ] Create preferences backup cleanup
 
 ## Priority 4 - Low (Nice to Have)
 - [ ] Implement A/B testing for documentation

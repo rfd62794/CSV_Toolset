@@ -1,8 +1,9 @@
 import json
 import os
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
+from datetime import datetime
 
 class ToolPreferencesDialog(tk.Toplevel):
     def __init__(self, parent, categories, current_preferences=None):
@@ -34,11 +35,17 @@ class ToolPreferencesDialog(tk.Toplevel):
         search_entry.grid(row=0, column=1, sticky="ew")
         search_frame.columnconfigure(1, weight=1)
         
-        # Select All/None frame
-        select_frame = ttk.Frame(main_frame)
-        select_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
-        ttk.Button(select_frame, text="Select All", command=self._select_all).grid(row=0, column=0, padx=5)
-        ttk.Button(select_frame, text="Select None", command=self._select_none).grid(row=0, column=1, padx=5)
+        # Action buttons frame
+        action_frame = ttk.Frame(main_frame)
+        action_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        
+        # Select All/None buttons
+        ttk.Button(action_frame, text="Select All", command=self._select_all).grid(row=0, column=0, padx=5)
+        ttk.Button(action_frame, text="Select None", command=self._select_none).grid(row=0, column=1, padx=5)
+        
+        # Backup/Restore buttons
+        ttk.Button(action_frame, text="Backup", command=self._backup).grid(row=0, column=2, padx=5)
+        ttk.Button(action_frame, text="Restore", command=self._restore).grid(row=0, column=3, padx=5)
         
         # Tools frame with scrollbar
         canvas = tk.Canvas(main_frame)
@@ -147,3 +154,56 @@ class ToolPreferencesDialog(tk.Toplevel):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             json.dump(preferences, f, indent=2) 
+        
+    def _backup(self):
+        """Backup current preferences to a file"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_name = f"csv_toolkit_preferences_{timestamp}.json"
+        
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            initialfile=default_name,
+            title="Backup Preferences"
+        )
+        
+        if filename:
+            try:
+                current_prefs = {name: var.get() for name, var in self.tool_vars.items()}
+                backup_data = {
+                    "timestamp": timestamp,
+                    "preferences": current_prefs,
+                    "categories": self.categories
+                }
+                
+                with open(filename, 'w') as f:
+                    json.dump(backup_data, f, indent=2)
+                messagebox.showinfo("Success", "Preferences backed up successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to backup preferences: {str(e)}")
+                
+    def _restore(self):
+        """Restore preferences from a backup file"""
+        filename = filedialog.askopenfilename(
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Restore Preferences"
+        )
+        
+        if filename:
+            try:
+                with open(filename) as f:
+                    backup_data = json.load(f)
+                
+                # Validate backup data
+                if not isinstance(backup_data, dict) or "preferences" not in backup_data:
+                    raise ValueError("Invalid backup file format")
+                
+                # Update preferences
+                restored_prefs = backup_data["preferences"]
+                for tool_name, var in self.tool_vars.items():
+                    if tool_name in restored_prefs:
+                        var.set(restored_prefs[tool_name])
+                
+                messagebox.showinfo("Success", "Preferences restored successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to restore preferences: {str(e)}") 
