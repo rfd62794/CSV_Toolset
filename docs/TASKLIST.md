@@ -70,4 +70,4 @@
 - Add examples for common use cases
 - Document error handling thoroughly
 - Include performance considerations
-- Track internal revisions (r#) for development milestones 
+- Track internal revisions (r#) for development milestones
