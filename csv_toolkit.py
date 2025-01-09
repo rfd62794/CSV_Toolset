@@ -32,6 +32,48 @@ class CSVToolkit(tk.Tk):
         self.tool_manager = ToolManager()
         self.register_tools()
         
+        # Category descriptions and icons
+        self.categories = {
+            "Analysis": {
+                "desc": "Tools for analyzing and understanding CSV data structure and content",
+                "icon": "📊",
+                "tools": {
+                    "CSV Inspector": "Examine CSV file structure and contents",
+                    "Data Profiler": "Generate statistical profiles of your data"
+                }
+            },
+            "Data Cleaning": {
+                "desc": "Tools for cleaning and standardizing data",
+                "icon": "🧹",
+                "tools": {
+                    "Column Sweeper": "Clean and standardize column data",
+                    "Phone Formatter": "Format and validate phone numbers",
+                    "Data Validator": "Validate data quality and consistency"
+                }
+            },
+            "Data Manipulation": {
+                "desc": "Tools for modifying and transforming data",
+                "icon": "🔧",
+                "tools": {
+                    "Sample Maker": "Create data samples",
+                    "Order Reverser": "Reverse row order",
+                    "Column Appender": "Add columns to CSV files",
+                    "CSV Merger": "Combine multiple CSV files",
+                    "CSV Splitter": "Split CSV into multiple files",
+                    "Data Transformer": "Transform column values",
+                    "Data Filter": "Filter rows based on conditions",
+                    "Column Manager": "Manage and organize columns"
+                }
+            },
+            "Data Formatting": {
+                "desc": "Tools for formatting and exporting data",
+                "icon": "📝",
+                "tools": {
+                    "Data Reformatter": "Reformat CSV files with different options"
+                }
+            }
+        }
+        
         self.create_menu()
         self.create_widgets()
         
@@ -83,164 +125,125 @@ class CSVToolkit(tk.Tk):
     
     def create_widgets(self):
         """Creates main application widgets"""
-        # Add error handling for category creation
         try:
-            # Create main container
+            # Create main container with padding
             self.main_container = ttk.Frame(self)
-            self.main_container.pack(fill=tk.BOTH, expand=True)
+            self.main_container.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
             
-            # Initialize dictionaries before use
+            # Initialize dictionaries
             self.tool_buttons = {}
             self.category_frames = {}
             self.test_results = []
             
-            # Add error handling for tool registration
-            self.register_tools()
+            # Create tool selection frame
+            self.tool_frame = ttk.Frame(self.main_container)
+            self.tool_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # Add search frame
+            self.search_frame = ttk.Frame(self.tool_frame)
+            self.search_frame.pack(fill=tk.X, pady=(0, 15))
+            
+            self.search_var = tk.StringVar()
+            self.search_var.trace('w', self._filter_tools)
+            
+            search_label = ttk.Label(
+                self.search_frame,
+                text="🔍 Search Tools:",
+                font=('Helvetica', 10)
+            )
+            search_label.pack(side=tk.LEFT, padx=(0, 5))
+            
+            self.search_entry = ttk.Entry(
+                self.search_frame,
+                textvariable=self.search_var,
+                width=40
+            )
+            self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            
+            # Create category frames
+            for category, info in self.categories.items():
+                # Create frame for this category
+                category_frame = ttk.LabelFrame(
+                    self.tool_frame,
+                    text=f"{info['icon']} {category}",
+                    padding=10
+                )
+                category_frame.pack(fill=tk.X, pady=(0, 15))
+                
+                # Add category description
+                desc_label = ttk.Label(
+                    category_frame,
+                    text=info['desc'],
+                    wraplength=600,
+                    justify=tk.LEFT,
+                    font=('Helvetica', 9, 'italic')
+                )
+                desc_label.pack(fill=tk.X, pady=(0, 10))
+                
+                # Create tool buttons frame
+                tools_frame = ttk.Frame(category_frame)
+                tools_frame.pack(fill=tk.X)
+                
+                # Create grid for tool buttons
+                row = 0
+                col = 0
+                max_cols = 2
+                
+                for tool_name, description in info['tools'].items():
+                    # Create tool button frame
+                    tool_frame = ttk.Frame(tools_frame, padding=5)
+                    tool_frame.grid(row=row, column=col, sticky='nsew', padx=5, pady=5)
+                    
+                    # Configure grid weights
+                    tools_frame.grid_columnconfigure(col, weight=1)
+                    
+                    # Create tool button with icon and name
+                    btn = ttk.Button(
+                        tool_frame,
+                        text=f"{tool_name}",
+                        command=lambda t=tool_name: self.show_tool(t),
+                        style='Tool.TButton'
+                    )
+                    btn.pack(fill=tk.X)
+                    
+                    # Add tool description
+                    desc_label = ttk.Label(
+                        tool_frame,
+                        text=description,
+                        wraplength=280,
+                        justify=tk.LEFT,
+                        font=('Helvetica', 8)
+                    )
+                    desc_label.pack(fill=tk.X, pady=(5, 0))
+                    
+                    # Store button reference
+                    self.tool_buttons[tool_name] = {
+                        'button': btn,
+                        'category': category,
+                        'tooltip': description
+                    }
+                    
+                    # Update grid position
+                    col += 1
+                    if col >= max_cols:
+                        col = 0
+                        row += 1
+                
+                self.category_frames[category] = category_frame
+            
+            # Configure style for tool buttons
+            style = ttk.Style()
+            style.configure(
+                'Tool.TButton',
+                padding=10,
+                font=('Helvetica', 10, 'bold')
+            )
             
         except Exception as e:
             messagebox.showerror(
                 "Initialization Error",
                 f"Error creating application: {str(e)}"
             )
-        
-        # Create tool selection frame with tabs
-        self.tool_frame = ttk.LabelFrame(self.main_container, text="Available Tools")
-        self.tool_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5, pady=5)
-        
-        # Category descriptions and icons
-        self.categories = {
-            "Analysis": {
-                "desc": "Tools for analyzing and understanding CSV data structure and content",
-                "icon": "📊",  # We can replace these with actual icon files later
-                "tools": {
-                    "CSV Inspector": "Examine CSV file structure and contents",
-                    "Data Profiler": "Generate statistical profiles of your data"
-                }
-            },
-            "Data Cleaning": {
-                "desc": "Tools for cleaning and standardizing data",
-                "icon": "🧹",
-                "tools": {
-                    "Column Sweeper": "Clean and standardize column data",
-                    "Phone Formatter": "Format and validate phone numbers",
-                    "Data Validator": "Validate data quality and consistency"
-                }
-            },
-            "Data Manipulation": {
-                "desc": "Tools for modifying and transforming data",
-                "icon": "🔧",
-                "tools": {
-                    "Sample Maker": "Create data samples",
-                    "Order Reverser": "Reverse row order",
-                    "Column Appender": "Add columns to CSV files",
-                    "CSV Merger": "Combine multiple CSV files",
-                    "CSV Splitter": "Split CSV into multiple files",
-                    "Data Transformer": "Transform column values",
-                    "Data Filter": "Filter rows based on conditions",
-                    "Column Manager": "Manage and organize columns"
-                }
-            },
-            "Data Formatting": {
-                "desc": "Tools for formatting and exporting data",
-                "icon": "📝",
-                "tools": {
-                    "Data Reformatter": "Reformat CSV files with different options"
-                }
-            }
-        }
-        
-        # Add search frame
-        self.search_frame = ttk.Frame(self.tool_frame)
-        self.search_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        self.search_var = tk.StringVar()
-        self.search_var.trace('w', self._filter_tools)
-        
-        ttk.Label(self.search_frame, text="Search:").pack(side=tk.LEFT)
-        self.search_entry = ttk.Entry(
-            self.search_frame,
-            textvariable=self.search_var
-        )
-        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-        
-        # Create notebook for categories
-        self.category_notebook = ttk.Notebook(self.tool_frame)
-        self.category_notebook.pack(fill=tk.BOTH, expand=True)
-        
-        for category, info in self.categories.items():
-            # Create frame for this category
-            category_frame = ttk.Frame(self.category_notebook)
-            
-            # Add category description
-            desc_label = ttk.Label(
-                category_frame,
-                text=f"{info['icon']} {info['desc']}",
-                wraplength=200,
-                justify=tk.LEFT
-            )
-            desc_label.pack(fill=tk.X, padx=5, pady=5)
-            
-            self.category_notebook.add(category_frame, text=f"{info['icon']} {category}")
-            self.category_frames[category] = category_frame
-        
-        # Create tool display area
-        self.tool_display = ttk.Frame(self.main_container)
-        self.tool_display.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        # Show welcome message
-        self.show_welcome()
-        
-        # Now that category frames exist, update tool buttons
-        self._update_tool_buttons()
-        
-        # Create toolbar
-        toolbar = ttk.Frame(self)
-        toolbar.pack(fill=tk.X, padx=5, pady=2)
-        
-        # Add test runner button to toolbar
-        test_btn = ttk.Button(
-            toolbar,
-            text="Run Tests",
-            command=self.run_tests
-        )
-        test_btn.pack(side=tk.LEFT, padx=2)
-        
-        # Add tooltip
-        if hasattr(self, 'tooltip'):
-            self.tooltip.bind_widget(
-                test_btn,
-                "Run test suite (Ctrl+T)"
-            )
-        
-        # Add test results frame
-        self.results_frame = ttk.LabelFrame(self, text="Test Results")
-        self.results_frame.pack(fill=tk.X, padx=5, pady=2)
-        
-        # Results tree
-        self.results_tree = ttk.Treeview(
-            self.results_frame,
-            columns=('timestamp', 'result', 'categories'),
-            show='headings',
-            height=3
-        )
-        
-        # Configure columns
-        self.results_tree.heading('timestamp', text='Time')
-        self.results_tree.heading('result', text='Result')
-        self.results_tree.heading('categories', text='Categories')
-        
-        self.results_tree.column('timestamp', width=150)
-        self.results_tree.column('result', width=100)
-        self.results_tree.column('categories', width=200)
-        
-        self.results_tree.pack(fill=tk.X, padx=5, pady=2)
-        
-        # Add clear results button
-        ttk.Button(
-            self.results_frame,
-            text="Clear History",
-            command=self.clear_test_results
-        ).pack(side=tk.RIGHT, padx=5, pady=2)
     
     def show_welcome(self):
         """Shows welcome message"""
