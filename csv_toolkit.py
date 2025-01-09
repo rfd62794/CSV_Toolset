@@ -281,17 +281,17 @@ class CSVToolkit(tk.Tk):
     
     def create_menu(self):
         """Creates the menu bar"""
-        menubar = tk.Menu(self)
-        self.config(menu=menubar)
+        self.menubar = tk.Menu(self)
+        self.config(menu=self.menubar)
         
         # File menu
-        file_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Exit", command=self.quit)
         
         # Tools menu
-        tools_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Tools", menu=tools_menu)
+        tools_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Tools", menu=tools_menu)
         
         # Add test runner to tools menu
         tools_menu.add_command(
@@ -304,8 +304,8 @@ class CSVToolkit(tk.Tk):
         self.bind_all("<Control-t>", lambda e: self.run_tests())
         
         # Help menu
-        help_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About", command=self.show_about)
         
         # Add shortcuts for new tools
