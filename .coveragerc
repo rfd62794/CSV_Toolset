@@ -1,1 +1,25 @@
- 
+[run]
+source = tools/
+omit =
+    tests/*
+    */__init__.py
+    */migrations/*
+    */config/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    raise ImportError
+    except ImportError:
+    def main\(\):
+
+[html]
+directory = coverage_html
+title = CSV Toolkit Test Coverage Report
+
+[xml]
+output = coverage.xml 
