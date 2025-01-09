@@ -1,15 +1,16 @@
 """Preferences validation and error handling utilities."""
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 import json
 import logging
+from .preferences_version import PreferencesVersion, PreferencesVersionManager
 
 logger = logging.getLogger(__name__)
 
 class PreferencesValidator:
     """Validates and sanitizes preferences data."""
     
-    REQUIRED_FIELDS = ["preferences", "timestamp", "categories"]
+    REQUIRED_FIELDS = ["preferences", "timestamp", "categories", "version"]
     TOOL_STATES = [True, False]
     
     @classmethod
@@ -29,6 +30,12 @@ class PreferencesValidator:
         for field in cls.REQUIRED_FIELDS:
             if field not in data:
                 errors.append(f"Missing required field: {field}")
+                
+        # Validate version
+        if "version" in data:
+            version = data["version"]
+            if not PreferencesVersion.is_valid(version):
+                errors.append(f"Invalid version: {version}")
                 
         # Validate preferences
         if "preferences" in data:
@@ -72,7 +79,8 @@ class PreferencesValidator:
         sanitized = {
             "preferences": {},
             "categories": data.get("categories", {}),
-            "timestamp": data.get("timestamp", "")
+            "timestamp": data.get("timestamp", ""),
+            "version": data.get("version", PreferencesVersion.latest())
         }
         
         # Sanitize preferences
@@ -96,6 +104,13 @@ class PreferencesValidator:
             with open(path) as f:
                 data = json.load(f)
                 
+            # Check for version and migrate if needed
+            version_manager = PreferencesVersionManager(path)
+            if version_manager.needs_migration(data):
+                data, notes = version_manager.migrate_if_needed(data)
+                if notes:
+                    logger.info("Migration notes:\n" + "\n".join(notes))
+                
             errors = cls.validate_preferences(data)
             if errors:
                 logger.error("Preferences validation failed:\n" + "\n".join(errors))
@@ -114,6 +129,10 @@ class PreferencesValidator:
         Returns True if successful, False otherwise.
         """
         try:
+            # Ensure version is set
+            if "version" not in data:
+                data["version"] = PreferencesVersion.latest()
+                
             sanitized = cls.sanitize_preferences(data)
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "w") as f:
