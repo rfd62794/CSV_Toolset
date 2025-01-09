@@ -65,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Menu integration for preferences
   - Scrollable category interface
   - Tool descriptions and tooltips
+  - Search functionality for tools
+  - Default preferences handling
+  - Error recovery mechanisms
+  - JSON-based storage format
+  - Preferences validation
+  - User feedback for errors
 
 ### Changed
 - Improved error handling in all tools
@@ -110,6 +116,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved menu organization
 - Added keyboard shortcuts
 - Enhanced user interface
+- Improved error handling
+- Enhanced preferences management
+- Optimized tool loading
+- Improved user feedback
+- Enhanced configuration storage
 
 ### Security
 - Added automated security scanning

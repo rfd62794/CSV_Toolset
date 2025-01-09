@@ -36,11 +36,16 @@
 - [x] Document app.py integration points
 - [x] Create configuration system documentation
 - [x] Document GUI framework architecture
-- [ ] Document tool preferences system
-- [ ] Create user preferences guide
-- [ ] Add tool visibility configuration guide
-- [ ] Document preferences file format
-- [ ] Create first-run experience guide
+- [x] Document tool preferences system
+- [x] Create user preferences guide
+- [x] Add tool visibility configuration guide
+- [x] Document preferences file format
+- [x] Create first-run experience guide
+- [ ] Add preferences migration guide
+- [ ] Create preferences backup/restore guide
+- [ ] Add preferences troubleshooting guide
+- [ ] Document keyboard shortcuts
+- [ ] Create tool categories guide
 
 ## Priority 3 - Medium (Important Improvements)
 - [x] Configure GitHub Discussions
@@ -68,6 +73,16 @@
 - [ ] Add preferences backup/restore documentation
 - [ ] Document preferences keyboard shortcuts
 - [ ] Create tool categories customization guide
+- [ ] Add preferences import/export feature
+- [ ] Create preferences reset functionality
+- [ ] Add preferences search optimization
+- [ ] Implement preferences validation
+- [ ] Add preferences conflict resolution
+- [ ] Create preferences sync mechanism
+- [ ] Add preferences versioning support
+- [ ] Create preferences audit logging
+- [ ] Add preferences analytics
+- [ ] Create preferences testing guide
 
 ## Priority 4 - Low (Nice to Have)
 - [ ] Implement A/B testing for documentation
@@ -86,6 +101,14 @@
 - [ ] Add tool preferences examples
 - [ ] Create tool organization guide
 - [ ] Document preferences customization
+- [ ] Add preferences themes support
+- [ ] Create preferences templates
+- [ ] Add preferences presets
+- [ ] Create preferences profiles
+- [ ] Add preferences sharing
+- [ ] Create preferences visualization
+- [ ] Add preferences statistics
+- [ ] Create preferences recommendations
 
 ## Tool Documentation (Ongoing)
 - [ ] Create csv_inspector.py documentation
