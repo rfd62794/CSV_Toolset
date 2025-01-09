@@ -12,8 +12,8 @@
 - [ ] Add preferences validation:
   - [x] Design validation schema
   - [x] Implement schema validation
-  - [ ] Add error handling
-  - [ ] Create validation tests
+  - [x] Add error handling
+  - [x] Create validation tests
   - [ ] Add performance checks
   - [ ] Create validation documentation
 - [ ] Create preferences backup/restore:
@@ -33,8 +33,8 @@
   - [ ] Add logging system
   - [ ] Create error documentation
 - [ ] Create testing framework:
-  - [ ] Set up test infrastructure
-  - [ ] Add unit tests
+  - [x] Set up test infrastructure
+  - [x] Add unit tests
   - [ ] Create integration tests
   - [ ] Add test documentation
 - [ ] Add performance monitoring:
