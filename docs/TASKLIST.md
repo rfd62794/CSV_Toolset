@@ -36,6 +36,11 @@
 - [x] Document app.py integration points
 - [x] Create configuration system documentation
 - [x] Document GUI framework architecture
+- [ ] Document tool preferences system
+- [ ] Create user preferences guide
+- [ ] Add tool visibility configuration guide
+- [ ] Document preferences file format
+- [ ] Create first-run experience guide
 
 ## Priority 3 - Medium (Important Improvements)
 - [x] Configure GitHub Discussions
@@ -45,7 +50,7 @@
 - [x] Create performance optimization guide
 - [x] Create data validation guide
 - [x] Create encoding handling guide
-- [ ] Create deployment guide
+- [x] Create deployment guide
 - [ ] Add version compatibility matrix
 - [ ] Set up version deprecation notices
 - [ ] Add changelog automation tests
@@ -59,6 +64,10 @@
 - [ ] Document stand_alone vs integrated tools differences
 - [ ] Create config directory usage guide
 - [ ] Add GUI customization documentation
+- [ ] Create tool preferences migration guide
+- [ ] Add preferences backup/restore documentation
+- [ ] Document preferences keyboard shortcuts
+- [ ] Create tool categories customization guide
 
 ## Priority 4 - Low (Nice to Have)
 - [ ] Implement A/B testing for documentation
@@ -74,6 +83,9 @@
 - [ ] Add custom tool examples
 - [ ] Add integration examples
 - [ ] Add error handling examples
+- [ ] Add tool preferences examples
+- [ ] Create tool organization guide
+- [ ] Document preferences customization
 
 ## Tool Documentation (Ongoing)
 - [ ] Create csv_inspector.py documentation
