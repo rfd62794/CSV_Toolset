@@ -129,6 +129,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Backup cleanup
     - Restore capabilities
     - Backup documentation
+  - Rollback test suite:
+    - Test fixtures and utilities
+    - Backup creation tests
+    - Rotation testing
+    - Version rollback tests
+    - Restore functionality tests
+    - Error handling tests
+    - Data integrity tests
+    - Directory management tests
+    - Cleanup operation tests
+    - Comprehensive coverage
+    - Edge case testing
+    - Test documentation
+    - Test examples
 
 ### Changed
 - Improved error handling in all tools
