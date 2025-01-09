@@ -11,12 +11,13 @@
     - [x] Testing
     - [x] Performance monitoring
     - [ ] Documentation
-  - [ ] Backup/Restore
-    - [ ] Format design
-    - [ ] Implementation
-    - [ ] Recovery system
-    - [ ] Testing
+  - [x] Backup/Restore
+    - [x] Format design
+    - [x] Implementation
+    - [x] Recovery system
+    - [x] Testing
     - [ ] Documentation
+    - [ ] GUI integration
   - [ ] Version Control
     - [ ] Schema design
     - [ ] Migration system
