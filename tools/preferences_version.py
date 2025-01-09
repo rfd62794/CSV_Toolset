@@ -4,6 +4,7 @@ from enum import Enum
 import logging
 from pathlib import Path
 from datetime import datetime
+from .preferences_rollback import PreferencesRollback
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,18 @@ class PreferencesVersion(Enum):
     def is_valid(cls, version: str) -> bool:
         """Check if version is valid."""
         return version in cls._value2member_map_
+        
+    @classmethod
+    def get_previous_version(cls, version: str) -> Optional[str]:
+        """Get the previous version in the sequence."""
+        if not cls.is_valid(version):
+            return None
+        versions = sorted(cls._value2member_map_.keys())
+        try:
+            idx = versions.index(version)
+            return versions[idx - 1] if idx > 0 else None
+        except ValueError:
+            return None
 
 class PreferencesMigrator:
     """Handles preferences version migrations."""
@@ -127,6 +140,7 @@ class PreferencesVersionManager:
     def __init__(self, path: Path):
         self.path = path
         self.version = PreferencesVersion.V2_0
+        self.rollback = PreferencesRollback(path)
         
     def get_version(self, data: Dict[str, Any]) -> str:
         """Get version from preferences data."""
@@ -143,7 +157,35 @@ class PreferencesVersionManager:
         Returns (migrated_data, migration_notes or None).
         """
         if self.needs_migration(data):
-            migrated, notes = PreferencesMigrator.migrate(data)
-            logger.info("Migrated preferences:\n" + "\n".join(notes))
-            return migrated, notes
-        return data, None 
+            # Create backup before migration
+            if not self.rollback.create_backup(data):
+                logger.warning("Failed to create backup before migration")
+                
+            try:
+                migrated, notes = PreferencesMigrator.migrate(data)
+                logger.info("Migrated preferences:\n" + "\n".join(notes))
+                return migrated, notes
+            except Exception as e:
+                logger.error(f"Migration failed: {str(e)}")
+                # Try to restore from backup
+                restored, restore_notes = self.rollback.restore_latest_backup()
+                if restored:
+                    logger.info("Restored from backup after failed migration")
+                    return restored, ["Migration failed, restored from backup"]
+                return data, [f"Migration failed: {str(e)}"]
+        return data, None
+        
+    def rollback_to_version(self, version: str) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+        """
+        Rollback to a specific version.
+        Returns (rolled_back_data, notes) or (None, error_notes).
+        """
+        return self.rollback.rollback_to_version(version)
+        
+    def get_available_versions(self) -> List[str]:
+        """Get list of versions available for rollback."""
+        return self.rollback.get_available_versions()
+        
+    def restore_latest_backup(self) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+        """Restore from most recent backup."""
+        return self.rollback.restore_latest_backup() 
