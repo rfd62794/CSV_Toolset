@@ -1,0 +1,98 @@
+name: Discussions Management
+
+on:
+  discussion:
+    types: [created, edited, answered, category_changed, transferred, pinned, unpinned, locked, unlocked, deleted]
+  discussion_comment:
+    types: [created, edited, deleted]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: github.event.discussion && github.event.action == 'created'
+    steps:
+      - name: Add triage label
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.discussions.addLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              discussion_number: context.payload.discussion.number,
+              labels: ['needs-triage']
+            })
+            
+  notify:
+    runs-on: ubuntu-latest
+    if: github.event.discussion && github.event.action == 'created'
+    steps:
+      - name: Notify maintainers
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const category = context.payload.discussion.category.name;
+            const notifyTeam = category === '📣 Announcements' ? 'team' : 'maintainers';
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.discussion.number,
+              body: `@${context.repo.owner}/${notifyTeam} New discussion in ${category}`
+            })
+            
+  metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update metrics
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const metrics = {
+              timestamp: new Date().toISOString(),
+              event_type: context.eventName,
+              action: context.payload.action,
+              category: context.payload.discussion?.category?.name,
+              user: context.payload.sender.login
+            };
+            
+            // Log metrics (implement actual logging mechanism)
+            console.log('Discussion metrics:', metrics);
+            
+  answered:
+    runs-on: ubuntu-latest
+    if: github.event.discussion && github.event.action == 'answered'
+    steps:
+      - name: Process answered discussion
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Add answered label
+            await github.rest.discussions.addLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              discussion_number: context.payload.discussion.number,
+              labels: ['answered']
+            });
+            
+            // Remove needs-triage label if present
+            try {
+              await github.rest.discussions.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                discussion_number: context.payload.discussion.number,
+                name: 'needs-triage'
+              });
+            } catch (error) {
+              console.log('Label not found:', error);
+            }
+            
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.discussion && github.event.action == 'deleted'
+    steps:
+      - name: Cleanup discussion resources
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Implement cleanup actions for deleted discussions
+            console.log('Cleaning up resources for deleted discussion:', context.payload.discussion.number); 

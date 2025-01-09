@@ -1,0 +1,173 @@
+# Search Configuration
+
+# Elasticsearch Settings
+elasticsearch:
+  hosts:
+    - "http://localhost:9200"
+  index_prefix: "csv_toolkit"
+  number_of_shards: 1
+  number_of_replicas: 1
+  refresh_interval: "1s"
+
+# Search Settings
+search:
+  index_name: "api_docs"
+  min_score: 0.5
+  max_results: 20
+  default_operator: "AND"
+  
+  highlight:
+    pre_tags: ["<strong>"]
+    post_tags: ["</strong>"]
+    fragment_size: 150
+    number_of_fragments: 3
+    
+  weights:
+    title: 3
+    content: 1
+    tags: 2
+    module: 2
+    
+  analyzers:
+    default:
+      type: "standard"
+      stopwords: "_english_"
+      
+    code:
+      type: "custom"
+      tokenizer: "standard"
+      filter:
+        - "lowercase"
+        - "stop"
+        - "snowball"
+
+# Indexing Settings
+indexing:
+  batch_size: 100
+  concurrent_indexers: 4
+  queue_size: 1000
+  
+  mappings:
+    properties:
+      title:
+        type: "text"
+        analyzer: "default"
+        boost: 3.0
+        fields:
+          keyword:
+            type: "keyword"
+            
+      content:
+        type: "text"
+        analyzer: "default"
+        
+      code:
+        type: "text"
+        analyzer: "code"
+        term_vector: "with_positions_offsets"
+        
+      path:
+        type: "keyword"
+        
+      type:
+        type: "keyword"
+        
+      module:
+        type: "keyword"
+        
+      tags:
+        type: "keyword"
+        
+      updated_at:
+        type: "date"
+
+# Performance Settings
+performance:
+  cache:
+    enabled: true
+    type: "memory"
+    max_size: 1000
+    ttl: 3600  # seconds
+    
+  query_optimization:
+    timeout: 10  # seconds
+    track_scores: true
+    explain: false
+    
+  rate_limiting:
+    enabled: true
+    max_requests: 100
+    window: 60  # seconds
+
+# Monitoring Settings
+monitoring:
+  enabled: true
+  interval: 60  # seconds
+  retention_period: 30  # days
+  
+  metrics:
+    query_time: true
+    result_count: true
+    cache_hits: true
+    zero_results: true
+    
+  alerts:
+    slow_queries:
+      threshold: 5  # seconds
+      window: 300  # seconds
+      
+    error_rate:
+      threshold: 0.05  # 5%
+      window: 3600  # seconds
+
+# Security Settings
+security:
+  sanitization:
+    enabled: true
+    max_query_length: 100
+    allowed_characters: "[\\w\\s-]"
+    
+  authentication:
+    required: true
+    cache_authenticated: true
+    
+  authorization:
+    enabled: true
+    default_access: "public"
+    
+  rate_limiting:
+    enabled: true
+    max_requests_per_ip: 100
+    window: 60  # seconds
+
+# Frontend Integration
+frontend:
+  widget:
+    debounce: 300  # milliseconds
+    min_chars: 2
+    placeholder: "Search API documentation..."
+    
+  results:
+    per_page: 10
+    highlight: true
+    show_path: true
+    show_type: true
+    show_module: true
+    
+  styling:
+    theme: "light"
+    highlight_color: "#007bff"
+    font_family: "system-ui, -apple-system, sans-serif"
+
+# Logging Settings
+logging:
+  level: "INFO"
+  file: "logs/search.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+  
+  metrics:
+    enabled: true
+    file: "logs/search_metrics.log"
+    format: "json" 
