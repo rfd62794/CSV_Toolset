@@ -1,100 +1,94 @@
-"""Preferences validation and error handling utilities."""
-from typing import Dict, Any, List, Optional, Tuple
-from pathlib import Path
+"""Preferences validation and sanitization utilities."""
 import json
 import logging
-from .preferences_version import PreferencesVersion, PreferencesVersionManager
+from pathlib import Path
+from typing import Dict, Any, Optional
+from datetime import datetime
+import jsonschema
+from .schemas.preferences_schema import PREFERENCES_SCHEMA
 
 logger = logging.getLogger(__name__)
 
 class PreferencesValidator:
     """Validates and sanitizes preferences data."""
     
-    REQUIRED_FIELDS = ["preferences", "timestamp", "categories", "version"]
-    TOOL_STATES = [True, False]
+    @classmethod
+    def validate(cls, data: Dict[str, Any]) -> bool:
+        """
+        Validate preferences data against schema.
+        Returns True if valid, False otherwise.
+        """
+        try:
+            jsonschema.validate(instance=data, schema=PREFERENCES_SCHEMA)
+            return True
+        except jsonschema.exceptions.ValidationError as e:
+            logger.error(f"Validation error: {str(e)}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error during validation: {str(e)}")
+            return False
     
     @classmethod
-    def validate_preferences(cls, data: Dict[str, Any]) -> List[str]:
+    def sanitize(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Validate preferences data structure and content.
-        Returns a list of validation errors, empty if valid.
+        Sanitize preferences data to ensure it meets schema requirements.
+        Returns sanitized data.
         """
-        errors = []
+        sanitized = data.copy()
         
-        # Check basic structure
-        if not isinstance(data, dict):
-            errors.append("Preferences must be a dictionary")
-            return errors
+        # Ensure required fields exist
+        if "version" not in sanitized:
+            sanitized["version"] = "1.0"
+        if "preferences" not in sanitized:
+            sanitized["preferences"] = {}
+        if "categories" not in sanitized:
+            sanitized["categories"] = {}
+        if "timestamp" not in sanitized:
+            sanitized["timestamp"] = datetime.now().strftime("%Y%m%d_%H%M%S")
             
-        # Check required fields
-        for field in cls.REQUIRED_FIELDS:
-            if field not in data:
-                errors.append(f"Missing required field: {field}")
-                
-        # Validate version
-        if "version" in data:
-            version = data["version"]
-            if not PreferencesVersion.is_valid(version):
-                errors.append(f"Invalid version: {version}")
-                
-        # Validate preferences
-        if "preferences" in data:
-            prefs = data["preferences"]
-            if not isinstance(prefs, dict):
-                errors.append("Preferences must be a dictionary")
-            else:
-                for tool, state in prefs.items():
-                    if not isinstance(tool, str):
-                        errors.append(f"Invalid tool name: {tool}")
-                    if state not in cls.TOOL_STATES:
-                        errors.append(f"Invalid state for {tool}: {state}")
-                        
-        # Validate categories
-        if "categories" in data:
-            cats = data["categories"]
-            if not isinstance(cats, dict):
-                errors.append("Categories must be a dictionary")
-            else:
-                for cat, info in cats.items():
-                    if not isinstance(info, dict):
-                        errors.append(f"Invalid category info for {cat}")
-                    else:
-                        required = ["desc", "icon", "tools"]
-                        for field in required:
-                            if field not in info:
-                                errors.append(f"Missing {field} in category {cat}")
-                                
-        return errors
-        
-    @classmethod
-    def sanitize_preferences(cls, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Clean and normalize preferences data.
-        Returns sanitized data or raises ValueError if invalid.
-        """
-        errors = cls.validate_preferences(data)
-        if errors:
-            raise ValueError("\n".join(errors))
-            
-        sanitized = {
-            "preferences": {},
-            "categories": data.get("categories", {}),
-            "timestamp": data.get("timestamp", ""),
-            "version": data.get("version", PreferencesVersion.latest())
+        # Sanitize preferences
+        prefs = sanitized["preferences"]
+        sanitized["preferences"] = {
+            name: bool(state)
+            for name, state in prefs.items()
+            if isinstance(name, str) and name.strip()
         }
         
-        # Sanitize preferences
-        prefs = data.get("preferences", {})
-        for tool, state in prefs.items():
-            sanitized["preferences"][str(tool)] = bool(state)
+        # Sanitize categories
+        cats = sanitized["categories"]
+        sanitized_cats = {}
+        for name, cat in cats.items():
+            if not isinstance(name, str) or not name.strip():
+                continue
+                
+            if not isinstance(cat, dict):
+                cat = {}
+                
+            sanitized_cat = {
+                "desc": str(cat.get("desc", "Category description")),
+                "icon": str(cat.get("icon", "📁")),
+                "tools": {}
+            }
             
-        return sanitized
+            tools = cat.get("tools", {})
+            if isinstance(tools, dict):
+                sanitized_cat["tools"] = {
+                    tool: str(desc)
+                    for tool, desc in tools.items()
+                    if isinstance(tool, str) and tool.strip()
+                }
+                
+            sanitized_cats[name] = sanitized_cat
+            
+        sanitized["categories"] = sanitized_cats
         
+        return sanitized
+    
     @classmethod
     def load_and_validate(cls, path: Path) -> Optional[Dict[str, Any]]:
         """
-        Load preferences from file and validate.
-        Returns validated preferences or None if invalid/not found.
+        Load preferences from file, validate, and sanitize if needed.
+        Returns None if file cannot be loaded or data is invalid.
         """
         try:
             if not path.exists():
@@ -104,41 +98,42 @@ class PreferencesValidator:
             with open(path) as f:
                 data = json.load(f)
                 
-            # Check for version and migrate if needed
-            version_manager = PreferencesVersionManager(path)
-            if version_manager.needs_migration(data):
-                data, notes = version_manager.migrate_if_needed(data)
-                if notes:
-                    logger.info("Migration notes:\n" + "\n".join(notes))
+            # Try validation first
+            if cls.validate(data):
+                return data
                 
-            errors = cls.validate_preferences(data)
-            if errors:
-                logger.error("Preferences validation failed:\n" + "\n".join(errors))
-                return None
+            # If validation fails, try sanitizing
+            sanitized = cls.sanitize(data)
+            if cls.validate(sanitized):
+                logger.info("Preferences data sanitized successfully")
+                return sanitized
                 
-            return cls.sanitize_preferences(data)
-            
-        except Exception as e:
-            logger.error(f"Failed to load preferences: {str(e)}")
+            logger.error("Failed to validate preferences even after sanitization")
             return None
             
+        except Exception as e:
+            logger.error(f"Error loading preferences: {str(e)}")
+            return None
+    
     @classmethod
     def save_validated(cls, path: Path, data: Dict[str, Any]) -> bool:
         """
-        Validate and save preferences to file.
+        Save preferences after validation.
         Returns True if successful, False otherwise.
         """
         try:
-            # Ensure version is set
-            if "version" not in data:
-                data["version"] = PreferencesVersion.latest()
+            # Sanitize and validate
+            sanitized = cls.sanitize(data)
+            if not cls.validate(sanitized):
+                return False
                 
-            sanitized = cls.sanitize_preferences(data)
+            # Save to file
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "w") as f:
                 json.dump(sanitized, f, indent=2)
+                
             return True
             
         except Exception as e:
-            logger.error(f"Failed to save preferences: {str(e)}")
+            logger.error(f"Error saving preferences: {str(e)}")
             return False 
