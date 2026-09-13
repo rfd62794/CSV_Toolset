@@ -22,7 +22,7 @@ A comprehensive suite of Python tools for processing, analyzing, and transformin
 
 ```bash
 # Clone the repository
-git clone [repository-url]
+git clone https://github.com/rfd62794/CSV_Toolset.git
 cd CSV_Toolset
 
 # Create virtual environment
